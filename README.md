@@ -6,6 +6,9 @@
 <!-- badges: start -->
 
 [![R-CMD-check](https://github.com/rafamoral/DImodels/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/rafamoral/DImodels/actions/workflows/R-CMD-check.yaml)
+[![test-coverage](https://github.com/rafamoral/DImodels/actions/workflows/test-coverage.yaml/badge.svg)](https://github.com/rafamoral/DImodels/actions/workflows/test-coverage.yaml)
+[![CRAN
+status](https://www.r-pkg.org/badges/version/DImodels)](https://CRAN.R-project.org/package=DImodels)
 <!-- badges: end -->
 
 The `DImodels` package is designed to make fitting

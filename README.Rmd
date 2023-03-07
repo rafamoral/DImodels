@@ -17,6 +17,8 @@ knitr::opts_chunk$set(
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/rafamoral/DImodels/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/rafamoral/DImodels/actions/workflows/R-CMD-check.yaml)
+[![test-coverage](https://github.com/rafamoral/DImodels/actions/workflows/test-coverage.yaml/badge.svg)](https://github.com/rafamoral/DImodels/actions/workflows/test-coverage.yaml)
+[![CRAN status](https://www.r-pkg.org/badges/version/DImodels)](https://CRAN.R-project.org/package=DImodels)
 <!-- badges: end -->
 
 The `DImodels` package is designed to make fitting Diversity-Interactions models easier. Diversity-Interactions (DI) models (Kirwan et al 2009) are a set of tools for analysing and interpreting data from experiments that explore the effects of species diversity (from a pool of *S* species) on community-level responses. Data suitable for DI models will include (at least) for each experimental unit: a response recorded at a point in time, and a set of proportions of *S* species  $p_1$, $p_2$, ..., $p_S$ from a point in time prior to the recording of the response. The proportions sum to 1 for each experimental unit.   
