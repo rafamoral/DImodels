@@ -1,8 +1,8 @@
 Package: DImodels
 Type: Package
 Title: Diversity-Interactions (DI) Models
-Version: 1.2
-Date: 2022-11-25
+Version: 1.2-1
+Date: 2023-03-07
 Authors@R: c(person("Rafael", "de Andrade Moral", role = c("aut", "cre"), email = "rafael.deandrademoral@mu.ie"), person("John", "Connolly", role = "aut"), person("Rishabh", "Vishwakarma", role = "ctb"), person("Caroline", "Brophy", role = "aut"))
 Author: Rafael de Andrade Moral [aut, cre], John Connolly [aut], Rishabh Vishwakarma [ctb], Caroline Brophy [aut]
 Maintainer: Rafael de Andrade Moral <rafael.deandrademoral@mu.ie>
