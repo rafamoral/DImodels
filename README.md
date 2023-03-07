@@ -6,7 +6,6 @@
 <!-- badges: start -->
 
 [![R-CMD-check](https://github.com/rafamoral/DImodels/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/rafamoral/DImodels/actions/workflows/R-CMD-check.yaml)
-[![R-CMD-check](https://github.com/rafamoral/DImodels/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/rafamoral/DImodels/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 The `DImodels` package is designed to make fitting
