@@ -1,0 +1,29 @@
+import(methods)
+import(graphics)
+import(stats)
+import(utils)
+import(hnp)
+import(rootSolve)
+
+
+export(autoDI)
+export(DI_data, DI_data_prepare, DI_data_E_AV, DI_data_ADD, DI_data_FG, DI_data_fullpairwise)
+export(DI)
+export(theta_CI)
+export(DI_compare)
+export(update_DI)
+export(extract)
+export(contrasts_DI)
+
+S3method(predict, DI)
+
+S3method(extract, DI)
+
+S3method(AICc, default)
+S3method(BICc, default)
+
+S3method(logLik, DI)
+S3method(AIC, DI)
+S3method(AICc, DI)
+S3method(BIC, DI)
+S3method(BICc, DI)

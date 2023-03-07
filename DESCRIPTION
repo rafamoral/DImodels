@@ -1,0 +1,21 @@
+Package: DImodels
+Type: Package
+Title: Diversity-Interactions (DI) Models
+Version: 1.2
+Date: 2022-11-25
+Authors@R: c(person("Rafael", "de Andrade Moral", role = c("aut", "cre"), email = "rafael.deandrademoral@mu.ie"), person("John", "Connolly", role = "aut"), person("Rishabh", "Vishwakarma", role = "ctb"), person("Caroline", "Brophy", role = "aut"))
+Author: Rafael de Andrade Moral [aut, cre], John Connolly [aut], Rishabh Vishwakarma [ctb], Caroline Brophy [aut]
+Maintainer: Rafael de Andrade Moral <rafael.deandrademoral@mu.ie>
+Imports: methods, graphics, stats, utils, hnp, rootSolve, multcomp
+Suggests: 
+    ggplot2,
+    knitr,
+    rmarkdown,
+    markdown,
+    testthat (>= 3.0.0)
+VignetteBuilder: knitr
+Depends: R (>= 3.6.0)
+Description: The 'DImodels' package is suitable for analysing data from biodiversity and ecosystem function studies using the Diversity-Interactions (DI) modelling approach introduced by Kirwan et al. (2009) <doi:10.1890/08-1684.1>. Suitable data will contain proportions for each species and a community-level response variable, and may also include additional factors, such as blocks or treatments. The package can perform data manipulation tasks, such as computing pairwise interactions (the DI_data() function), can perform an automated model selection process (the autoDI() function) and has the flexibility to fit a wide range of user-defined DI models (the DI() function).
+License: GPL (>=2)
+NeedsCompilation: no
+Config/testthat/edition: 3
