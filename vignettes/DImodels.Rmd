@@ -1,19 +1,21 @@
 ---
-title: "Getting Started with DImodels"
-author: "Rafael de Andrade Moral, John Connolly, Rishabh Vishwakarma, Laura Byrne and Caroline Brophy"
-date: "`r Sys.Date()`"
+title: "DImodels"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Getting Started with DImodels}
+  %\VignetteIndexEntry{DImodels}
   %\VignetteEngine{knitr::rmarkdown}
-  \usepackage[utf8]{inputenc}
+  %\VignetteEncoding{UTF-8}
 ---
-  
-```{r setup, include = FALSE}
+
+```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
+```
+
+```{r setup}
+library(DImodels)
 ```
 
 # Getting Started with `DImodels`
