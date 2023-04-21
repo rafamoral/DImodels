@@ -7,8 +7,8 @@
 # selection = "Ftest" to perform F (or X2) tests to select best model,
 #             "AIC" to use select model with smallest AIC
 
-autoDI <- function(y, block, density, prop, treat, FG = NULL, data,
-                   selection = c("Ftest","AIC","AICc","BIC","BICc"),
+autoDI <- function(y, prop, data, block, density, treat, FG = NULL, 
+                   selection = c("Ftest","AIC","AICc","BIC","BICc"), 
                    step0 = FALSE, step4 = TRUE) {
   if(missing(y)) stop("You must supply a response variable name or column index through the argument 'y'.\n")
   

@@ -1,6 +1,6 @@
-DI <- function(y, block, density, prop, treat, FG, DImodel,
-               extra_formula, custom_formula,
-               data, estimate_theta = FALSE, theta = 1) {
+DI <- function(y, prop, DImodel, custom_formula, data,
+               block, density, treat, FG, extra_formula,
+               estimate_theta = FALSE, theta = 1) {
   DIcall <- match.call()
   if(theta < 0){
     stop('Please choose a positive value for theta.')
@@ -19,8 +19,14 @@ DI <- function(y, block, density, prop, treat, FG, DImodel,
     }
   }
   
-  if(missing(custom_formula) & missing(y)) {
-    stop("You must supply a response variable name or column index through the argument 'y'.\n")
+  # if custom_formula is not provided, y and DImodel must be specified
+  if(missing(custom_formula)) {
+    if(missing(y)) {
+      stop("You must supply a response variable name or column index through the argument 'y'.\n")
+    }
+    if(missing(DImodel)) {
+      stop("The DImodel argument must be specified, unless a custom_formula is provided. Currently implemented options for the DImodel argument are 'STR', 'ID', 'AV', 'ADD', 'FG', and 'FULL'. See ?DI for details.")
+    }
   }
   
   ########## RV change ###############

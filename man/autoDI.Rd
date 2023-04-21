@@ -11,7 +11,7 @@ This function provides an automated way to fit a (limited) range of Diversity-In
 
 }
 \usage{
-autoDI(y, block, density, prop, treat, FG = NULL, data, 
+autoDI(y, prop, data, block, density, treat, FG = NULL, 
        selection = c("Ftest","AIC","AICc","BIC","BICc"), 
        step0 = FALSE, step4 = TRUE)
 }

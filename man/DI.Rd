@@ -30,8 +30,9 @@ This function will fit a wide range of Diversity-Interactions (DI) models, one a
 %}
 
 \usage{
-DI(y, block, density, prop, treat, FG, DImodel, extra_formula, custom_formula, 
-  data, estimate_theta = FALSE, theta = 1)
+DI(y, prop, DImodel, custom_formula, data,
+   block, density, treat, FG, extra_formula,
+   estimate_theta = FALSE, theta = 1)
 }
 
 
