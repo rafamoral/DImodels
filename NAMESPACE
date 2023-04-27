@@ -14,6 +14,7 @@ export(DI_compare)
 export(update_DI)
 export(extract)
 export(contrasts_DI)
+export(richness_vs_DI)
 
 S3method(predict, DI)
 
