@@ -47,11 +47,13 @@ This function fits four models and compares them using AIC. The four models are:
 
 2. The average pairwise interactions (AV) DI model with common identity effects and theta equal to 0.5 (which is equivalent to model 1 when communities are all equi-proportional);
 
-3. The average pairwise interactions (AV) DI model allowing for unique identity effects, but maintaining theta equal to 0.5;
+3. The average pairwise interactions (AV) DI model with common identity effects and estimating theta;
 
-4. The average pairwise interactions (AV) DI model allowing for unique identity effects, and estimating theta.
+4. The average pairwise interactions (AV) DI model allowing for unique identity effects, but maintaining theta equal to 0.5;
 
-The function prints a table with AIC and associated degrees of freedom for each of the four models above, and returns the model with the smallest AIC.
+5. The average pairwise interactions (AV) DI model allowing for unique identity effects, and estimating theta.
+
+The function prints a table with AIC, AICc, BIC, and associated degrees of freedom for each of the four models above, and returns the model with the smallest AIC.
 
 }
 \value{

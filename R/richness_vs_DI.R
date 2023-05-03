@@ -61,17 +61,31 @@ richness_vs_DI <- function(y, prop, data, extra_formula) {
          extra_formula = extra_formula)
     ))
   
-  ## get AIC values for the four models
+  ## get df for the five models
+  all_dfs <- n - c(m1$df.residual,
+                   m2$df.residual,
+                   m3$df.residual,
+                   m4$df.residual,
+                   m5$df.residual)
+  
+  ## get AIC values for the five models
   all_AICs <- c(AIC(m1), AIC(m2), AIC(m3), AIC(m4), AIC(m5))
+  
+  ## get AICc values for the five models
+  all_np <- all_dfs + 1
+  all_AICcs <- all_AICs + (2 * all_np^2 + 2 * all_np)/(n - all_np - 1)
+  
+  ## get BIC values for the five models
+  all_BICs <- c(BIC(m1), BIC(m2), BIC(m3), BIC(m4), BIC(m5))
+  
+  ## create list of models
   model_list <- list(m1, m2, m3, m4, m5)
   
   ## print AIC values
   the_table <- data.frame("AIC" = all_AICs,
-                          "df" = n - c(m1$df.residual,
-                                       m2$df.residual,
-                                       m3$df.residual,
-                                       m4$df.residual,
-                                       m5$df.residual),
+                          "AICc" = all_AICcs,
+                          "BIC" = all_BICs,
+                          "df" = all_dfs,
                           "Description" = c("Model 1: Richness only",
                                             "Model 2: Average interactions 'AV' DImodel with common identity effects and theta = 0.5",
                                             "Model 3: Average interactions 'AV' DImodel with common identity effects and theta estimated",
