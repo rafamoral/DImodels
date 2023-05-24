@@ -8,6 +8,7 @@
 [![R-CMD-check](https://github.com/rafamoral/DImodels/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/rafamoral/DImodels/actions/workflows/R-CMD-check.yaml)
 [![CRAN
 status](https://www.r-pkg.org/badges/version/DImodels)](https://CRAN.R-project.org/package=DImodels)
+[![DOI](https://zenodo.org/badge/610857928.svg)](https://zenodo.org/badge/latestdoi/610857928)
 [![Codecov test
 coverage](https://codecov.io/gh/rafamoral/DImodels/branch/main/graph/badge.svg)](https://app.codecov.io/gh/rafamoral/DImodels?branch=main)
 <!-- badges: end -->
@@ -26,8 +27,7 @@ experimental unit.
 **Main changes in the package from version 1.0 to version 1.1 and
 newer**
 
--   `DI_data_prepare` is now superseded by `DI_data` (see examples
-    below)
+- `DI_data_prepare` is now superseded by `DI_data` (see examples below)
 
 ## `DImodels` installation and load
 
