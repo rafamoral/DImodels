@@ -1,4 +1,4 @@
-DI_data_prepare <- function(y, block, density, prop, treat, FG = NULL, data, theta = 1) {
+DI_data_prepare <- function(y, block, density, prop, treat, ID, FG = NULL, data, theta = 1) {
   if(any(is.na(data))) {
     stop("The dataset contains missing values. Please remove them prior to analysis.") 
   }
@@ -56,6 +56,9 @@ DI_data_prepare <- function(y, block, density, prop, treat, FG = NULL, data, the
   
   ## checking if the Pi's sum to 1
   prop_check <- DI_prop_check(Pind = Pind, data = data_check)
+  if(prop_check == "OOB") {
+    stop("One or more rows have species proportions with values less than 0 or greater than 1. This must be corrected prior to analysis.\n")
+  }
   if(prop_check == "error") {
     stop("One or more rows have species proportions that do not sum to 1. This must be corrected prior to analysis.\n")
   }
@@ -84,16 +87,31 @@ DI_data_prepare <- function(y, block, density, prop, treat, FG = NULL, data, the
   }
   newdata <- data.frame(newdata, ADD$ADD)
   ## calculating FG variables
-  if(!is.null(FG)) FG <- DI_data_FG(prop = prop, FG = FG, data = data, theta = theta)$FG
+  if(!is.null(FG)) {
+    FG <- DI_data_FG(prop = prop, FG = FG, data = data, theta = theta)$FG
+    FG_names <- colnames(FG)
+  } else {
+    FG_names <- NULL
+  }
   
   # Calculating the FULL variables
   FULL <- DI_data_fullpairwise(prop = prop, data = data[, prop], theta = theta)
   # Add variabes to data
   newdata <- cbind(newdata, FULL)
   
+  ###### RV change########
+  # Grouping ID effects
+  if(missing(ID)){
+    ID <- paste0(prop, "_ID")
+  } 
+  ID_name_check(ID = ID, prop = prop, FG = FG_names)
+  grouped_ID <- group_IDs(data = data, prop = prop, ID = ID)
+  newdata <- cbind(newdata, grouped_ID)
+  #######################
+  
   ## return object
   return(list("newdata" = newdata, "y" = y, "block" = block, density = density,
-              "prop" = prop, "treat" = treat, "FG" = FG,
+              "prop" = prop, "ID" = unique(ID), "treat" = treat, "FG" = FG,
               "P_int_flag" = P_int_flag, "even_flag" = even_flag, "nSpecies" = length(prop)))
 }
 
@@ -103,7 +121,7 @@ get_P_indices <- function(prop, data) {
     prop <- names(data[, prop]) # species proportions P_i (names)
   } else {
     vec_grep <- Vectorize(grep, "pattern")
-    Pind <- as.numeric(vec_grep(paste("\\<", prop, "\\>", sep = ""),
+    Pind <- as.numeric(vec_grep(paste0("^", prop, "$"),#paste("\\<", prop, "\\>", sep = ""),
                                 names(data)))
   }
   return(list(Pind = Pind, prop = prop))
@@ -308,6 +326,10 @@ DI_data_fullpairwise <- function(prop, data, theta = 1) {
 
 DI_prop_check <- function(Pind, data) {
   props <- data[,Pind]
+  # prop values are out of bounds, i.e. > 1 or < 0
+  if(any(props > 1 | props < 0)){
+    return("OOB") 
+  }
   pi_sums <- apply(props, 1, sum)
   if(any(pi_sums > 1.0001) | any(pi_sums < .9999)) {
     return("error")
@@ -360,6 +382,73 @@ add_name_check <- function(data){
   if (any(grepl('^.*_add', colnames(data)))){
     stop('Certain column names cause internal conflicts when calculating additive interactions. Please rename any columns containing the string \'_add\'.')
   }
+}
+
+ID_name_check <- function(ID, prop, FG){
+  cond1 <- length(grep(":", ID)) > 0
+  cond2 <- any(ID == "_")
+  cond3 <- any(ID == "i")
+  cond4 <- any(ID == "n")
+  cond5 <- any(ID == "f")
+  cond6 <- any(ID == "g")
+  cond7 <- any(ID == "_i")
+  cond8 <- any(ID == "in")
+  cond9 <- any(ID == "nf")
+  cond10 <- any(ID == "fg")
+  cond11 <- any(ID == "g_")
+  cond12 <- any(ID == "_in")
+  cond13 <- any(ID == "inf")
+  cond14 <- any(ID == "nfg")
+  cond15 <- any(ID == "fg_")
+  cond16 <- any(ID == "_inf")
+  cond17 <- any(ID == "infg")
+  cond18 <- any(ID == "nfg_")
+  cond19 <- any(ID == "_infg")
+  cond20 <- any(ID == "infg_")
+  cond21 <- any(ID == "_infg_")
+  cond22 <- length(grep(pattern = "^add", x = ID, ignore.case = TRUE)) > 0
+  cond23 <- length(grep(pattern = "^full", x = ID, ignore.case = TRUE)) > 0
+  cond24 <- length(grep(pattern = "^fg", x = ID, ignore.case = TRUE)) > 0
+  cond25 <- any(ID == "E")
+  cond26 <- any(ID == "AV")
+  if(cond1 | cond2 | cond3 | cond4 | cond5 | cond6 | cond7 |
+     cond8 | cond9 | cond10 | cond11 | cond12 | cond13 | cond14 |
+     cond15 | cond16 | cond17 | cond18 | cond19 | cond20 | cond21 | 
+     cond22 | cond23 | cond24| cond25 | cond26) {
+    stop("Please give your IDs a different name.",
+         " Names should not include colons (':'), or any single or multiple",
+         " character combination of the expressions '_infg_', 'ADD', 'FG', 'FULL', 'E', and 'AV'.",
+         " These expressions are reserved for internal computations.")
+  }
+  if(length(ID)!=length(prop)){
+    stop("'ID' should be a vector of same length as prop vector specifying the grouping structure for the ID effects")
+  }
+  if(any(ID %in% FG)){
+    stop("'ID' cannot have any names common with names of functional groups specified by 'FG'. Change the name of groups in either 'ID' or 'FG'")
+  }
+}
+
+group_IDs <- function(data, prop, ID){
+  # Species proportions to sum 
+  props <- data[, prop] 
+  
+  # Unique IDs
+  uIDs <- unique(ID) 
+  
+  # Number of unique ID terms
+  nIDs <- length(uIDs) 
+  
+  sapply(uIDs, function(x){
+    # Index of prop to sum
+    idx <- which(ID == x) 
+    if(length(idx) == 1){
+      # No need to sum if only one element in group
+      result <- props[, idx]
+    } else {
+      # Sum of species proportions
+      result <-  rowSums(props[, idx])
+    }
+  })
 }
 #########################################
 

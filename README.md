@@ -24,8 +24,22 @@ species $p_1$, $p_2$, …, $p_S$ from a point in time prior to the
 recording of the response. The proportions sum to 1 for each
 experimental unit.
 
-**Main changes in the package from version 1.0 to version 1.1 and
-newer**
+**Main changes in the package from version 1.2 to version 1.3**
+
+- The `DI` and `autoDI` functions now have an additional parameter
+  called `ID` which enables the user to group the species identity
+  effects (see examples below).
+- The `predict` function now has flexibility to calculate confidence and
+  prediction intervals for the predicted values.
+
+**Main changes in the package from version 1.1 to version 1.2**
+
+- There are two new functions added to the package:
+  - `predict`: Make predictions from a fitted DI model without having to
+    worry about theta, and the interaction terms in the data.
+  - `contrasts_DI`: Create contrasts for a DI model.
+
+**Main changes in the package from version 1.0 to version 1.1**
 
 - `DI_data_prepare` is now superseded by `DI_data` (see examples below)
 
@@ -37,14 +51,6 @@ way.
 ``` r
 install.packages("DImodels")
 library("DImodels")
-```
-
-You can install the development version of DImodels from
-[GitHub](https://github.com/) with:
-
-``` r
-# install.packages("devtools")
-devtools::install_github("rafamoral/DImodels")
 ```
 
 ## Accessing an introduction to Diversity-Introductions models
@@ -292,15 +298,15 @@ summary(auto1)
 #> 
 #> Coefficients:
 #>                Estimate Std. Error t value Pr(>|t|)    
-#> p1               9.7497     0.3666  26.595  < 2e-16 ***
-#> p2               8.5380     0.3672  23.253  < 2e-16 ***
-#> p3               8.2329     0.3666  22.459  < 2e-16 ***
-#> p4               6.3644     0.3665  17.368  < 2e-16 ***
-#> p5              10.8468     0.3669  29.561  < 2e-16 ***
-#> p6               5.9621     0.4515  13.205  < 2e-16 ***
-#> p7               5.4252     0.4516  12.015  < 2e-16 ***
-#> p8               7.3204     0.4515  16.213  < 2e-16 ***
-#> p9               8.2154     0.4515  18.196  < 2e-16 ***
+#> p1_ID            9.7497     0.3666  26.595  < 2e-16 ***
+#> p2_ID            8.5380     0.3672  23.253  < 2e-16 ***
+#> p3_ID            8.2329     0.3666  22.459  < 2e-16 ***
+#> p4_ID            6.3644     0.3665  17.368  < 2e-16 ***
+#> p5_ID           10.8468     0.3669  29.561  < 2e-16 ***
+#> p6_ID            5.9621     0.4515  13.205  < 2e-16 ***
+#> p7_ID            5.4252     0.4516  12.015  < 2e-16 ***
+#> p8_ID            7.3204     0.4515  16.213  < 2e-16 ***
+#> p9_ID            8.2154     0.4515  18.196  < 2e-16 ***
 #> FG_bfg_FG1_FG2   3.4395     0.8635   3.983 8.09e-05 ***
 #> FG_bfg_FG1_FG3  11.5915     0.8654  13.395  < 2e-16 ***
 #> FG_bfg_FG2_FG3   2.8711     1.2627   2.274  0.02351 *  
@@ -359,15 +365,15 @@ summary(m1)
 #> 
 #> Coefficients:
 #>                Estimate Std. Error t value Pr(>|t|)    
-#> p1               9.7497     0.3666  26.595  < 2e-16 ***
-#> p2               8.5380     0.3672  23.253  < 2e-16 ***
-#> p3               8.2329     0.3666  22.459  < 2e-16 ***
-#> p4               6.3644     0.3665  17.368  < 2e-16 ***
-#> p5              10.8468     0.3669  29.561  < 2e-16 ***
-#> p6               5.9621     0.4515  13.205  < 2e-16 ***
-#> p7               5.4252     0.4516  12.015  < 2e-16 ***
-#> p8               7.3204     0.4515  16.213  < 2e-16 ***
-#> p9               8.2154     0.4515  18.196  < 2e-16 ***
+#> p1_ID            9.7497     0.3666  26.595  < 2e-16 ***
+#> p2_ID            8.5380     0.3672  23.253  < 2e-16 ***
+#> p3_ID            8.2329     0.3666  22.459  < 2e-16 ***
+#> p4_ID            6.3644     0.3665  17.368  < 2e-16 ***
+#> p5_ID           10.8468     0.3669  29.561  < 2e-16 ***
+#> p6_ID            5.9621     0.4515  13.205  < 2e-16 ***
+#> p7_ID            5.4252     0.4516  12.015  < 2e-16 ***
+#> p8_ID            7.3204     0.4515  16.213  < 2e-16 ***
+#> p9_ID            8.2154     0.4515  18.196  < 2e-16 ***
 #> FG_bfg_FG1_FG2   3.4395     0.8635   3.983 8.09e-05 ***
 #> FG_bfg_FG1_FG3  11.5915     0.8654  13.395  < 2e-16 ***
 #> FG_bfg_FG2_FG3   2.8711     1.2627   2.274  0.02351 *  
@@ -395,14 +401,69 @@ m1_theta <- update_DI(object = m1, estimate_theta = TRUE)
 #> Fitted model: Functional group effects 'FG' DImodel
 #> Theta estimate: 0.9681
 coef(m1_theta)
-#>             p1             p2             p3             p4             p5 
+#>          p1_ID          p2_ID          p3_ID          p4_ID          p5_ID 
 #>      9.8128865      8.6069092      8.2968619      6.4287580     10.9110563 
-#>             p6             p7             p8             p9 FG_bfg_FG1_FG2 
+#>          p6_ID          p7_ID          p8_ID          p9_ID FG_bfg_FG1_FG2 
 #>      6.0189395      5.4846833      7.4038925      8.2992262      2.9840924 
 #> FG_bfg_FG1_FG3 FG_bfg_FG2_FG3     FG_wfg_FG1     FG_wfg_FG2     FG_wfg_FG3 
 #>     10.6019235      2.3514998      2.3737831      0.3789464      1.8470612 
 #>     treatmentA          theta 
 #>      3.1017864      0.9681005
+```
+
+### Grouping the species identity effects in the model
+
+The species identity effects in a DI model can be grouped by specifying
+groups for each species using the `ID` argument. The `ID` argument
+functions similar to the `FG` argument and accepts a character list of
+same length as number of species in the model. The identity effects of
+species belonging in the same group will be grouped together.
+
+Grouping all identity effects into a single term
+
+``` r
+m1_group <- update_DI(object = m1_theta, 
+                      ID = c("ID1", "ID1", "ID1", "ID1", "ID1",
+                             "ID1", "ID1", "ID1", "ID1"))
+#> Warning in DI_data_prepare(y = y, block = block, density = density, prop = prop, : One or more rows have species proportions that sum to approximately 1, but not exactly 1. This is typically a rounding issue, and has been corrected internally prior to analysis.
+#> Fitted model: Functional group effects 'FG' DImodel
+#> Theta estimate: 0.9919
+coef(m1_group)
+#>            ID1 FG_bfg_FG1_FG2 FG_bfg_FG1_FG3 FG_bfg_FG2_FG3     FG_wfg_FG1 
+#>      7.8667702      1.1475018     12.9438529     -1.2235215      5.6141823 
+#>     FG_wfg_FG2     FG_wfg_FG3     treatmentA          theta 
+#>     -5.5214662      1.0205019      3.1017864      0.9919097
+```
+
+Grouping identity effects of specific species
+
+``` r
+m1_group2 <- update_DI(object = m1_theta, 
+                       ID = c("ID1", "ID1", "ID1", 
+                              "ID2", "ID2", "ID2", 
+                              "ID3", "ID3", "ID3"))
+#> Warning in DI_data_prepare(y = y, block = block, density = density, prop = prop, : One or more rows have species proportions that sum to approximately 1, but not exactly 1. This is typically a rounding issue, and has been corrected internally prior to analysis.
+#> Fitted model: Functional group effects 'FG' DImodel
+#> Theta estimate: 0.989
+coef(m1_group2)
+#>            ID1            ID2            ID3 FG_bfg_FG1_FG2 FG_bfg_FG1_FG3 
+#>      8.5288216      7.9537767      7.1357104      0.9665077     13.3434768 
+#> FG_bfg_FG2_FG3     FG_wfg_FG1     FG_wfg_FG2     FG_wfg_FG3     treatmentA 
+#>      0.4940952      4.1543637     -4.4683501      3.4674196      3.1017864 
+#>          theta 
+#>      0.9889999
+```
+
+Note: Grouping ID effects will not have an effect on the calculation of
+the interaction effects, they would still be calculated by using all
+species.
+
+Read the documentation of `DI` and `autoDI` for more information and
+examples using the `ID` parameter.
+
+``` r
+?DI
+?autoDI
 ```
 
 ## Fitting customised models using the `DI` function
@@ -437,15 +498,15 @@ summary(m2)
 #> 
 #> Coefficients:
 #>                  Estimate Std. Error t value Pr(>|t|)    
-#> p1               9.391824   0.540485  17.377  < 2e-16 ***
-#> p2               8.492825   0.540879  15.702  < 2e-16 ***
-#> p3               8.406038   0.540471  15.553  < 2e-16 ***
-#> p4               6.015296   0.540391  11.131  < 2e-16 ***
-#> p5              10.802270   0.378776  28.519  < 2e-16 ***
-#> p6               5.917565   0.461482  12.823  < 2e-16 ***
-#> p7               5.380703   0.461535  11.658  < 2e-16 ***
-#> p8               7.275881   0.461506  15.766  < 2e-16 ***
-#> p9               8.170907   0.461471  17.706  < 2e-16 ***
+#> p1_ID           10.018491   0.466552  21.473  < 2e-16 ***
+#> p2_ID            8.494038   0.467009  18.188  < 2e-16 ***
+#> p3_ID            7.970716   0.466536  17.085  < 2e-16 ***
+#> p4_ID            6.624476   0.466443  14.202  < 2e-16 ***
+#> p5_ID           10.802270   0.378776  28.519  < 2e-16 ***
+#> p6_ID            5.917565   0.461482  12.823  < 2e-16 ***
+#> p7_ID            5.380703   0.461535  11.658  < 2e-16 ***
+#> p8_ID            7.275881   0.461506  15.766  < 2e-16 ***
+#> p9_ID            8.170907   0.461471  17.706  < 2e-16 ***
 #> FG_bfg_FG1_FG2   3.439508   0.865279   3.975 8.38e-05 ***
 #> FG_bfg_FG1_FG3  11.591458   0.867140  13.367  < 2e-16 ***
 #> FG_bfg_FG2_FG3   2.871063   1.265295   2.269  0.02381 *  
@@ -453,10 +514,10 @@ summary(m2)
 #> FG_wfg_FG2       0.679285   2.360195   0.288  0.77365    
 #> FG_wfg_FG3       2.416774   2.333420   1.036  0.30097    
 #> treatmentA       3.190868   0.216493  14.739  < 2e-16 ***
-#> `p1:treatmentB`  0.626667   0.668369   0.938  0.34902    
-#> `p2:treatmentB`  0.001213   0.668369   0.002  0.99855    
-#> `p3:treatmentB` -0.435322   0.668369  -0.651  0.51522    
-#> `p4:treatmentB`  0.609180   0.668369   0.911  0.36262    
+#> `treatmentA:p1` -0.626667   0.668369  -0.938  0.34902    
+#> `treatmentA:p2` -0.001213   0.668369  -0.002  0.99855    
+#> `treatmentA:p3`  0.435322   0.668369   0.651  0.51522    
+#> `treatmentA:p4` -0.609180   0.668369  -0.911  0.36262    
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 #> 
@@ -501,15 +562,15 @@ summary(m3)
 #> 
 #> Coefficients:
 #>                          Estimate Std. Error t value Pr(>|t|)    
-#> p1                        9.68668    0.40000  24.217  < 2e-16 ***
-#> p2                        8.47495    0.40053  21.159  < 2e-16 ***
-#> p3                        8.16990    0.39998  20.426  < 2e-16 ***
-#> p4                        6.30140    0.39987  15.759  < 2e-16 ***
-#> p5                       10.78379    0.40031  26.938  < 2e-16 ***
-#> p6                        5.89908    0.47958  12.301  < 2e-16 ***
-#> p7                        5.36222    0.47963  11.180  < 2e-16 ***
-#> p8                        7.25740    0.47960  15.132  < 2e-16 ***
-#> p9                        8.15243    0.47957  17.000  < 2e-16 ***
+#> p1_ID                     9.68668    0.40000  24.217  < 2e-16 ***
+#> p2_ID                     8.47495    0.40053  21.159  < 2e-16 ***
+#> p3_ID                     8.16990    0.39998  20.426  < 2e-16 ***
+#> p4_ID                     6.30140    0.39987  15.759  < 2e-16 ***
+#> p5_ID                    10.78379    0.40031  26.938  < 2e-16 ***
+#> p6_ID                     5.89908    0.47958  12.301  < 2e-16 ***
+#> p7_ID                     5.36222    0.47963  11.180  < 2e-16 ***
+#> p8_ID                     7.25740    0.47960  15.132  < 2e-16 ***
+#> p9_ID                     8.15243    0.47957  17.000  < 2e-16 ***
 #> FG_bfg_FG1_FG2            4.00191    1.12383   3.561 0.000415 ***
 #> FG_bfg_FG1_FG3           11.77389    1.12973  10.422  < 2e-16 ***
 #> FG_bfg_FG2_FG3            3.83681    1.64287   2.335 0.020027 *  
@@ -586,6 +647,185 @@ summary(m3)
 #> AIC: 1335.3
 #> 
 #> Number of Fisher Scoring iterations: 2
+```
+
+## Making predictions and testing contrasts for DI models
+
+### Predictions using a DI model
+
+We can make predictions from a DI model just like any other regression
+model using the `predict` function. The user does not need to worry
+about adding any interaction terms or adjusting any columns if theta is
+not equal to 1. Only the species proportions along with any additional
+experimental structures is needed and all other terms in the model will
+be calculated for the user.
+
+``` r
+# Fit model
+m3 <- DI(y = "response", prop = 4:12, 
+         treat = "treatment", DImodel = "AV", 
+         extra_formula = ~ (AV) : treatment, data = sim3a)
+#> Warning in DI_data_prepare(y = y, block = block, density = density, prop = prop, : One or more rows have species proportions that sum to approximately 1, but not exactly 1. This is typically a rounding issue, and has been corrected internally prior to analysis.
+#> Fitted model: Average interactions 'AV' DImodel
+
+predict_data <- sim3[c(1, 79, 352), 3:12]
+# Only species proportions and treatment is needed
+print(predict_data)
+#>     treatment p1 p2        p3 p4        p5        p6        p7        p8
+#> 1           A  0  0 0.0000000  0 0.0000000 0.0000000 0.0000000 0.0000000
+#> 79          A  0  0 0.0000000  0 0.5000000 0.0000000 0.0000000 0.5000000
+#> 352         B  0  0 0.1666667  0 0.1666667 0.1666667 0.1666667 0.1666667
+#>            p9
+#> 1   1.0000000
+#> 79  0.0000000
+#> 352 0.1666667
+# Make prediction
+predict(m3, newdata = predict_data)
+#>        1       79      352 
+#> 12.83789 14.27503 10.00291
+```
+
+### Uncertainity around predictions
+
+``` r
+# The interval and level parameters can be used to calculate the 
+# uncertainty around the predictions
+
+# Get confidence interval around prediction
+predict(m3, newdata = predict_data, interval = "confidence")
+#>          fit       lwr      upr
+#> 1   12.83789 12.028716 13.64707
+#> 79  14.27503 13.817612 14.73246
+#> 352 10.00291  9.694552 10.31126
+
+# Get prediction interval around prediction
+predict(m3, newdata = predict_data, interval = "prediction")
+#>          fit       lwr      upr
+#> 1   12.83789 10.124779 15.55100
+#> 79  14.27503 11.645310 16.90476
+#> 352 10.00291  7.394976 12.61083
+
+# The function returns a 95% interval by default, 
+# this can be changed using the level argument
+predict(m3, newdata = predict_data, 
+        interval = "prediction", level = 0.9)
+#>          fit       lwr      upr
+#> 1   12.83789 10.562595 15.11319
+#> 79  14.27503 12.069670 16.48040
+#> 352 10.00291  7.815819 12.18999
+```
+
+### Contrasts for DI models
+
+The `contrasts_DI` function can be used to compare and formally test for
+a difference in performance of communities within the same as well as
+across different experimental structures
+
+Comparing the performance of the monocultures of different species at
+treatment A
+
+``` r
+contr <- list("p1vsp2" = c(1, -1, 0, 0,  0,  0, 0, 0,  0, 0, 0, 0),
+              "p3vsp5" = c(0,  0, 1, 0, -1,  0, 0, 0,  0, 0, 0, 0),
+              "p4vsp6" = c(0,  0, 0, 1,  0, -1, 0, 0,  0, 0, 0, 0),
+              "p7vsp9" = c(0,  0, 0, 0,  0,  0, 1, 0, -1, 0, 0, 0))
+the_C <- contrasts_DI(m3, contrast = contr)
+#> Generated contrast matrix:
+#>        p1_ID p2_ID p3_ID p4_ID p5_ID p6_ID p7_ID p8_ID p9_ID AV treatmentA
+#> p1vsp2     1    -1     0     0     0     0     0     0     0  0          0
+#> p3vsp5     0     0     1     0    -1     0     0     0     0  0          0
+#> p4vsp6     0     0     0     1     0    -1     0     0     0  0          0
+#> p7vsp9     0     0     0     0     0     0     1     0    -1  0          0
+#>        `AV:treatmentB`
+#> p1vsp2               0
+#> p3vsp5               0
+#> p4vsp6               0
+#> p7vsp9               0
+summary(the_C)
+#> 
+#>   Simultaneous Tests for General Linear Hypotheses
+#> 
+#> Fit: glm(formula = new_fmla, family = family, data = new_data)
+#> 
+#> Linear Hypotheses:
+#>             Estimate Std. Error z value Pr(>|z|)    
+#> p1vsp2 == 0    1.473      0.477   3.088  0.00803 ** 
+#> p3vsp5 == 0   -2.652      0.477  -5.560 1.08e-07 ***
+#> p4vsp6 == 0    1.462      0.477   3.064  0.00870 ** 
+#> p7vsp9 == 0   -5.521      0.477 -11.573  < 2e-16 ***
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+#> (Adjusted p values reported -- single-step method)
+```
+
+Comparing across the two treatment levels for monoculture of species 1
+
+``` r
+contr <- list("treatAvsB" = c(1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0))
+the_C <- contrasts_DI(m3, contrast = contr)
+#> Generated contrast matrix:
+#>           p1_ID p2_ID p3_ID p4_ID p5_ID p6_ID p7_ID p8_ID p9_ID AV treatmentA
+#> treatAvsB     1     0     0     0     0     0     0     0     0  0          1
+#>           `AV:treatmentB`
+#> treatAvsB               0
+summary(the_C)
+#> 
+#>   Simultaneous Tests for General Linear Hypotheses
+#> 
+#> Fit: glm(formula = new_fmla, family = family, data = new_data)
+#> 
+#> Linear Hypotheses:
+#>                Estimate Std. Error z value Pr(>|z|)    
+#> treatAvsB == 0  12.8993     0.4116   31.34   <2e-16 ***
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+#> (Adjusted p values reported -- single-step method)
+```
+
+Comparing between two species mixtures
+
+``` r
+mixA <- c(0.25, 0,      0.25, 0,      0.25, 0,      0.25, 0, 0, 0, 0, 0)
+mixB <- c(0,    0.3333, 0,    0.3333, 0,    0.3333, 0,    0, 0, 0, 0, 0)
+
+# We have the proportions of the individual species in the mixtures, however
+# we still need to calculate the interaction effect for these communities
+contr_data <- data.frame(rbind(mixA, mixB))
+colnames(contr_data) <- names(coef(m3))
+
+# Adding the interaction effect of the two mixtures
+contr_data$AV <- DI_data_E_AV(prop = 1:9, data = contr_data)$AV
+print(contr_data)
+#>      p1_ID  p2_ID p3_ID  p4_ID p5_ID  p6_ID p7_ID p8_ID p9_ID        AV
+#> mixA  0.25 0.0000  0.25 0.0000  0.25 0.0000  0.25     0     0 0.3750000
+#> mixB  0.00 0.3333  0.00 0.3333  0.00 0.3333  0.00     0     0 0.3332667
+#>      treatmentA `AV:treatmentB`
+#> mixA          0               0
+#> mixB          0               0
+
+# We can now subtract the respective values in each column of the two 
+# mixtures and get our contrast
+my_contrast <- as.matrix(contr_data[1, ] - contr_data[2, ])
+rownames(my_contrast) <- "mixAvsB"
+
+the_C <- contrasts_DI(m3, contrast = my_contrast)
+#> Generated contrast matrix:
+#>         p1_ID   p2_ID p3_ID   p4_ID p5_ID   p6_ID p7_ID p8_ID p9_ID         AV
+#> mixAvsB  0.25 -0.3333  0.25 -0.3333  0.25 -0.3333  0.25     0     0 0.04173333
+#>         treatmentA `AV:treatmentB`
+#> mixAvsB          0               0
+summary(the_C)
+#> 
+#>   Simultaneous Tests for General Linear Hypotheses
+#> 
+#> Fit: glm(formula = new_fmla, family = family, data = new_data)
+#> 
+#> Linear Hypotheses:
+#>              Estimate Std. Error z value Pr(>|z|)    
+#> mixAvsB == 0   2.0379     0.2599   7.841 4.44e-15 ***
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+#> (Adjusted p values reported -- single-step method)
 ```
 
 ## References

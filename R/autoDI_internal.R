@@ -331,30 +331,30 @@ autoDI_step0 <- function(y, block, density, treat, family, data) {
   #options(scipen = 0)
 }
 
-autoDI_step1 <- function(y, block, density, prop, treat, family, data, selection) {
+autoDI_step1 <- function(y, block, density, prop, treat, ID, family, data, selection) {
   
   model_tag <- ifelse(length(prop) == 2, "FULL", "AV")
   
   if(is.na(treat)) {
       model_name <- paste0(model_tag, "_model")
       fit_theta <- suppressWarnings(suppressMessages(DI(y = y, block = block, density = density, prop = prop,
-                                       DImodel = model_tag, data = data, estimate_theta = TRUE)))
+                                                        ID = ID, DImodel = model_tag, data = data, estimate_theta = TRUE)))
       fit_notheta <- suppressWarnings(suppressMessages(DI(y = y, block = block, density = density, prop = prop,
-                                         DImodel = model_tag, data = data, estimate_theta = FALSE)))
+                                                          ID = ID, DImodel = model_tag, data = data, estimate_theta = FALSE)))
       fit_theta$DIcall <- call("DI", y = y, block = block, density = density, prop = prop,
-                               DImodel = model_tag, data = data, estimate_theta = TRUE)
+                               ID = ID, DImodel = model_tag, data = data, estimate_theta = TRUE)
       fit_notheta$DIcall <- call("DI", y = y, block = block, density = density, prop = prop,
-                                 DImodel = model_tag, data = data, estimate_theta = FALSE)
+                                 ID = ID, DImodel = model_tag, data = data, estimate_theta = FALSE)
     } else {
       model_name <- paste0(model_tag, "_model_treat")
       fit_theta <- suppressWarnings(suppressMessages(DI(y = y, block = block, density = density, prop = prop,
-                                       treat = treat, DImodel = model_tag, data = data, estimate_theta = TRUE)))
+                                                        ID = ID, treat = treat, DImodel = model_tag, data = data, estimate_theta = TRUE)))
       fit_notheta <- suppressWarnings(suppressMessages(DI(y = y, block = block, density = density, prop = prop,
-                                         treat = treat, DImodel = model_tag, data = data, estimate_theta = FALSE)))
+                                                          ID = ID, treat = treat, DImodel = model_tag, data = data, estimate_theta = FALSE)))
       fit_theta$DIcall <- call("DI", y = y, block = block, density = density, prop = prop,
-                               treat = treat, DImodel = model_tag, data = data, estimate_theta = TRUE)
+                               ID = ID, treat = treat, DImodel = model_tag, data = data, estimate_theta = TRUE)
       fit_notheta$DIcall <- call("DI", y = y, block = block, density = density, prop = prop,
-                                 treat = treat, DImodel = model_tag, data = data, estimate_theta = FALSE)
+                                 ID = ID, treat = treat, DImodel = model_tag, data = data, estimate_theta = FALSE)
     }
   
   message("\n", strrep("-", getOption("width")))
@@ -392,7 +392,7 @@ autoDI_step1 <- function(y, block, density, prop, treat, family, data, selection
 }
 
 autoDI_step2 <- function(y, block, density, 
-                         prop, treat, FG, 
+                         prop, treat, ID, FG, 
                          family, data, theta_flag,
                          selection, selected_model){
   
@@ -420,10 +420,10 @@ autoDI_step2 <- function(y, block, density,
   }
   
   ID_model <- suppressWarnings(suppressMessages(DI(y = y, block = block, density = density, 
-                 prop = prop, treat = treat, 
+                 prop = prop, treat = treat, ID = ID,
                  data = data, DImodel = 'ID')))
   STR_model <- suppressWarnings(suppressMessages(DI(y = y, block = block, density = density, 
-                  prop = prop, treat = treat, 
+                  prop = prop, treat = treat, ID = ID,
                   data = data, DImodel = 'STR')))
   model_list <- list('STR_model' = STR_model, 'ID_model' = ID_model)
   
@@ -432,28 +432,28 @@ autoDI_step2 <- function(y, block, density,
     theta_est <- coefficients(selected_model)['theta']
     if(AV_flag){
       AV_model <- suppressWarnings(suppressMessages(DI(y = y, block = block, density = density, 
-                     prop = prop, treat = treat, theta = theta_est, 
+                     prop = prop, treat = treat, ID = ID, theta = theta_est, 
                      data = data, DImodel = 'AV')))
       model_list[[length(model_list)+1]] <- AV_model
       names(model_list)[length(model_list)] <- 'AV_model'
     }
     if(FG_flag){
       FG_model <- suppressWarnings(suppressMessages(DI(y = y, block = block, density = density, 
-                     prop = prop, treat = treat, theta = theta_est,  
+                     prop = prop, treat = treat, ID = ID, theta = theta_est,  
                      data = data, FG = FG, DImodel = 'FG')))
       model_list[[length(model_list)+1]] <- FG_model
       names(model_list)[length(model_list)] <- 'FG_model'
     }
     if(ADD_flag){
       ADD_model <- suppressWarnings(suppressMessages(DI(y = y, block = block, density = density, 
-                      prop = prop, treat = treat, theta = theta_est, 
+                      prop = prop, treat = treat, ID = ID, theta = theta_est, 
                       data = data, DImodel = 'ADD')))
       model_list[[length(model_list)+1]] <- ADD_model
       names(model_list)[length(model_list)] <- 'ADD_model'
     }
     if(FULL_flag){
       FULL_model <- suppressWarnings(suppressMessages(DI(y = y, block = block, density = density, 
-                       prop = prop, treat = treat, theta = theta_est, 
+                       prop = prop, treat = treat, ID = ID, theta = theta_est, 
                        data = data, DImodel = 'FULL')))
       model_list[[length(model_list)+1]] <- FULL_model
       names(model_list)[length(model_list)] <- 'FULL_model'
@@ -467,28 +467,28 @@ autoDI_step2 <- function(y, block, density,
   } else {
     if(AV_flag){
       AV_model <- suppressWarnings(suppressMessages(DI(y = y, block = block, density = density, 
-                     prop = prop, treat = treat, estimate_theta = F,
+                     prop = prop, treat = treat, ID = ID, estimate_theta = F,
                      data = data, DImodel = 'AV')))
       model_list[[length(model_list)+1]] <- AV_model
       names(model_list)[length(model_list)] <- 'AV_model'
     }
     if(FG_flag){
       FG_model <- suppressWarnings(suppressMessages(DI(y = y, block = block, density = density, 
-                     prop = prop, treat = treat, estimate_theta = F, 
+                     prop = prop, treat = treat, ID = ID, estimate_theta = F, 
                      data = data, FG = FG, DImodel = 'FG')))
       model_list[[length(model_list)+1]] <- FG_model
       names(model_list)[length(model_list)] <- 'FG_model'
     }
     if(ADD_flag){
       ADD_model <- suppressWarnings(suppressMessages(DI(y = y, block = block, density = density, 
-                      prop = prop, treat = treat, estimate_theta = F, 
+                      prop = prop, treat = treat, ID = ID, estimate_theta = F, 
                       data = data, DImodel = 'ADD')))
       model_list[[length(model_list)+1]] <- ADD_model
       names(model_list)[length(model_list)] <- 'ADD_model'
     } 
     if(FULL_flag){
       FULL_model <- suppressWarnings(suppressMessages(DI(y = y, block = block, density = density, 
-                       prop = prop, treat = treat, estimate_theta = F, 
+                       prop = prop, treat = treat, ID = ID, estimate_theta = F, 
                        data = data, DImodel = 'FULL')))
       model_list[[length(model_list)+1]] <- FULL_model
       names(model_list)[length(model_list)] <- 'FULL_model'
@@ -537,13 +537,14 @@ autoDI_step2 <- function(y, block, density,
   estimate_theta <- theta_flag
   DImodel <-  fit_final$DIcall$DImodel
   the_final_model <- suppressWarnings(suppressMessages(DI(y = y, prop = prop, block = block,
-                                         FG = FG, density = density, treat = treat,
+                                         FG = FG, ID = ID, density = density, treat = treat,
                                          estimate_theta = estimate_theta,
                                          DImodel = DImodel, data = data)))
   the_final_model$DIcall$prop <- prop
   the_final_model$DIcall$DImodel <- DImodel
   the_final_model$DIcall$estimate_theta <- estimate_theta
   the_final_model$DIcall$FG <- FG
+  the_final_model$DIcall$ID <- ID
   the_final_model$DIcall$treat <- treat
   the_final_model$DIcall$block <- block
   the_final_model$DIcall$density <- density

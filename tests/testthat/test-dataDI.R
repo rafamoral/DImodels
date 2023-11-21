@@ -120,9 +120,16 @@ test_that("DI_data_prepare works", {
   expect_error(DI_data_prepare(data = dummy, prop = 1:4, y = 5),
                regexp = "One or more rows have species proportions that do not sum to 1. This must be corrected prior to analysis")
   
+  # Ensure there are no negative proportions
+  dummy <- rbind(Switzerland[, 4:8], c(-0.1, 0.9, 0.1, 0.1, 0))
+  expect_error(DI_data_prepare(data = dummy, prop = 1:4, y = 5),
+               regexp = "One or more rows have species proportions with values less than 0 or greater than 1. This must be corrected prior to analysis")
+  
+  
   # Warning if any species proportions sum to 0
   dummy <- rbind(Switzerland[, 4:8], c(0, 0, 0, 0, 0))
   expect_warning(DI_data_prepare(data = dummy, prop = 1:4, y = 5),
                regexp = "One or more rows in your dataset have ALL proportions equal to zero")
+  
   
 })

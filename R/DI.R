@@ -1,5 +1,5 @@
-DI <- function(y, prop, DImodel, custom_formula, data,
-               block, density, treat, FG, extra_formula,
+DI <- function(y, prop, DImodel, custom_formula, data, 
+               block, density, treat, ID, FG, extra_formula,
                estimate_theta = FALSE, theta = 1) {
   DIcall <- match.call()
   if(theta < 0){
@@ -84,6 +84,7 @@ DI <- function(y, prop, DImodel, custom_formula, data,
   if(DImodel == "FG" & is.null(FG)) {
     stop("The argument FG must be specified alongside DImodel = 'FG'.\n") 
   }
+  
   if(!missing(custom_formula)) {
     if(DImodel != "CUSTOM") {
       warning("fitting custom DI model using supplied custom_formula instead of model ", DImodel,
@@ -93,16 +94,25 @@ DI <- function(y, prop, DImodel, custom_formula, data,
     model_fit <- DI_CUSTOM(custom_formula = custom_formula, data = data,
                            family = family, estimate_theta = estimate_theta, total = total)
   } else {
-    # preparing new data object
-    data_obj <- DI_data_prepare(y = y, block = block, density = density, prop = prop, treat = treat, FG = FG, data = data, theta = theta)
-    newdata <- data_obj$newdata
-    nSpecies <- data_obj$nSpecies
+    # Ensure there are enough species to fit different DI models
+    nSpecies <- length(prop)
     if(nSpecies <= 2 & DImodel == "E") {
       stop("you must have > 2 species to fit model ", DImodel, " (", namesub_DI(DImodel), ")")
     }
     if(nSpecies <= 2 & DImodel == "AV") {
       stop("you must have > 2 species to fit model ", DImodel, " (", namesub_DI(DImodel), ")")
     }
+    if(nSpecies <= 2 & DImodel == "FG") {
+      stop("you must have > 2 species to fit model ", DImodel, " (", namesub_DI(DImodel), ")")
+    }
+    if(nSpecies <= 3 & DImodel == "ADD") {
+      stop("you must have > 3 species to fit model ", DImodel, " (", namesub_DI(DImodel), ")")
+    }
+    
+    # preparing new data object
+    data_obj <- DI_data_prepare(y = y, block = block, density = density, prop = prop, treat = treat, ID = ID, FG = FG, data = data, theta = theta)
+    newdata <- data_obj$newdata
+    nSpecies <- data_obj$nSpecies
     if(data_obj$P_int_flag & DImodel == "ADD") {
       stop("you must have > 3 species to fit model ", DImodel, " (", namesub_DI(DImodel), ")")
     }
@@ -117,11 +127,11 @@ DI <- function(y, prop, DImodel, custom_formula, data,
     ## fitting the model
     if(DImodel == "FG") {
       model_fit <- model_fun(y = data_obj$y, block = data_obj$block, density = data_obj$density, prop = data_obj$prop, FG = data_obj$FG,
-                             treat = data_obj$treat, data = newdata, family = family, extra_formula = extra_formula,
+                             ID = data_obj$ID, treat = data_obj$treat, data = newdata, family = family, extra_formula = extra_formula,
                              estimate_theta = estimate_theta, nSpecies = nSpecies, total = total, FGnames = FGnames)
     } else {
       model_fit <- model_fun(y = data_obj$y, block = data_obj$block, density = data_obj$density, prop = data_obj$prop, FG = data_obj$FG,
-                             treat = data_obj$treat, data = newdata, family = family, extra_formula = extra_formula,
+                             ID = data_obj$ID, treat = data_obj$treat, data = newdata, family = family, extra_formula = extra_formula,
                              estimate_theta = estimate_theta, nSpecies = nSpecies, total = total)
     }
   }
@@ -158,7 +168,7 @@ DI_CUSTOM <- function(custom_formula, data, family, estimate_theta, total) {
   return(modlist)
 }
 
-DI_STR <- function(y, block, density, prop, treat, FG, data, family, estimate_theta, nSpecies, total, extra_formula = 0) {
+DI_STR <- function(y, block, density, prop, treat, FG, ID, data, family, estimate_theta, nSpecies, total, extra_formula = 0) {
   DIinternalcall <- match.call()
   
   if(density != "density_zero") {
@@ -199,7 +209,7 @@ DI_STR <- function(y, block, density, prop, treat, FG, data, family, estimate_th
               "theta" = mod_STR))
 }
 
-DI_STR_treat <- function(y, block, density, prop, treat, FG, data, family, estimate_theta, nSpecies, total, extra_formula = 0) {
+DI_STR_treat <- function(y, block, density, prop, treat, FG, ID, data, family, estimate_theta, nSpecies, total, extra_formula = 0) {
   DIinternalcall <- match.call()
   
   if(density != "density_zero") {
@@ -233,14 +243,14 @@ DI_STR_treat <- function(y, block, density, prop, treat, FG, data, family, estim
     }
   }
   mod_STR_treat <- DI_check_and_fit(fmla = fmla_STR_treat, y = y,
-                                     block = block, density = density, treat = treat,
-                                     family = family, data = data)
+                                    block = block, density = density, treat = treat,
+                                    family = family, data = data)
   mod_STR_treat$DIinternalcall <- DIinternalcall
   return(list("model" = mod_STR_treat,
               "theta" = mod_STR_treat))
 }
 
-DI_ID <- function(y, block, density, prop, treat, FG, data, family, estimate_theta, nSpecies, total, extra_formula = 0) {
+DI_ID <- function(y, block, density, prop, treat, FG, ID, data, family, estimate_theta, nSpecies, total, extra_formula = 0) {
   DIinternalcall <- match.call()
   
   if(density != "density_zero") {
@@ -262,10 +272,10 @@ DI_ID <- function(y, block, density, prop, treat, FG, data, family, estimate_the
   }
   if(block == "block_zero") {
     fmla_ID <- as.formula(paste(y, "~", "0+",
-                                paste(prop, collapse = "+"),
+                                paste(ID, collapse = "+"),
                                 "+", extra_terms))
   } else {
-    fmla_ID <- as.formula(paste(y, "~", "0+", paste(prop, collapse = "+"), "+", block,
+    fmla_ID <- as.formula(paste(y, "~", "0+", paste(ID, collapse = "+"), "+", block,
                                 "+", extra_terms))
   }
   # check design matrix and fit model
@@ -277,7 +287,7 @@ DI_ID <- function(y, block, density, prop, treat, FG, data, family, estimate_the
               "theta" = mod_ID))
 }
 
-DI_ID_treat <- function(y, block, density, prop, treat, FG, data, family, estimate_theta, nSpecies, total, extra_formula = 0) {
+DI_ID_treat <- function(y, block, density, prop, treat, FG, ID, data, family, estimate_theta, nSpecies, total, extra_formula = 0) {
   DIinternalcall <- match.call()
   
   if(density != "density_zero") {
@@ -298,10 +308,10 @@ DI_ID_treat <- function(y, block, density, prop, treat, FG, data, family, estima
     y <- paste("cbind(", y, ",", total, "-", y, ")") 
   }
   if(block == "block_zero") {
-    fmla_ID_treat <- as.formula(paste(y, "~", "0+", paste(prop, collapse = "+"), "+", treat,
+    fmla_ID_treat <- as.formula(paste(y, "~", "0+", paste(ID, collapse = "+"), "+", treat,
                                       "+", extra_terms))
   } else {
-    fmla_ID_treat <- as.formula(paste(y, "~", "0+", paste(prop, collapse = "+"), "+", block, "+", treat,
+    fmla_ID_treat <- as.formula(paste(y, "~", "0+", paste(ID, collapse = "+"), "+", block, "+", treat,
                                       "+", extra_terms))
   }
   # check design matrix and fit model
@@ -313,7 +323,7 @@ DI_ID_treat <- function(y, block, density, prop, treat, FG, data, family, estima
               "theta" = mod_ID_treat))
 }
 
-DI_AV <- function(y, block, density, prop, treat, FG, data, family, estimate_theta, nSpecies, total, extra_formula = 0) {
+DI_AV <- function(y, block, density, prop, treat, FG, ID, data, family, estimate_theta, nSpecies, total, extra_formula = 0) {
   DIinternalcall <- match.call()
   
   if(density != "density_zero") {
@@ -336,11 +346,11 @@ DI_AV <- function(y, block, density, prop, treat, FG, data, family, estimate_the
   if(!any(names(data) == "AV")) stop("'AV' variable not found in dataset.")
   if(block == "block_zero") {
     fmla_AV <- as.formula(paste(y, "~", "0+", 
-                                paste(prop, collapse = "+"), "+AV",
+                                paste(ID, collapse = "+"), "+AV",
                                 "+", extra_terms)) 
   } else {
     fmla_AV <- as.formula(paste(y, "~", "0+",
-                                paste(prop, collapse = "+"), "+AV+", block,
+                                paste(ID, collapse = "+"), "+AV+", block,
                                 "+", extra_terms))
   }
   # check design matrix and fit model
@@ -350,7 +360,7 @@ DI_AV <- function(y, block, density, prop, treat, FG, data, family, estimate_the
   modlist <- list("model" = mod_AV)
   modlist$model$DIinternalcall <- DIinternalcall
   if(estimate_theta) {
-    modlist$theta <- DI_theta(obj = mod_AV, DImodel = "AV",
+    modlist$theta <- DI_theta(obj = mod_AV, DImodel = "AV", prop = prop,
                               nSpecies = nSpecies, family = family)
     modlist$theta$DIinternalcall <- DIinternalcall
     # RV change
@@ -359,7 +369,7 @@ DI_AV <- function(y, block, density, prop, treat, FG, data, family, estimate_the
   return(modlist)
 }
 
-DI_AV_treat <- function(y, block, density, prop, treat, FG, data, family, estimate_theta, nSpecies, total, extra_formula = 0) {
+DI_AV_treat <- function(y, block, density, prop, treat, FG, ID, data, family, estimate_theta, nSpecies, total, extra_formula = 0) {
   DIinternalcall <- match.call()
   
   if(density != "density_zero") {
@@ -381,10 +391,10 @@ DI_AV_treat <- function(y, block, density, prop, treat, FG, data, family, estima
   }
   if(!any(names(data) == "AV")) stop("'AV' variable not found in dataset.")
   if(block == "block_zero") {
-    fmla_AV_treat <- as.formula(paste(y, "~", "0+", paste(prop, collapse = "+"), "+AV+", treat,
+    fmla_AV_treat <- as.formula(paste(y, "~", "0+", paste(ID, collapse = "+"), "+AV+", treat,
                                       "+", extra_terms)) 
   } else {
-    fmla_AV_treat <- as.formula(paste(y, "~", "0+", paste(prop, collapse = "+"), "+AV+", block, "+", treat,
+    fmla_AV_treat <- as.formula(paste(y, "~", "0+", paste(ID, collapse = "+"), "+AV+", block, "+", treat,
                                       "+", extra_terms))
   }
   # check design matrix and fit model
@@ -394,7 +404,7 @@ DI_AV_treat <- function(y, block, density, prop, treat, FG, data, family, estima
   modlist <- list("model" = mod_AV_treat)
   modlist$model$DIinternalcall <- DIinternalcall
   if(estimate_theta) {
-    modlist$theta <- DI_theta(obj = mod_AV_treat, DImodel = "AV",
+    modlist$theta <- DI_theta(obj = mod_AV_treat, DImodel = "AV", prop = prop,
                               nSpecies = nSpecies, family = family)
     modlist$theta$DIinternalcall <- DIinternalcall
     # RV change
@@ -403,7 +413,7 @@ DI_AV_treat <- function(y, block, density, prop, treat, FG, data, family, estima
   return(modlist)
 }
 
-DI_E <- function(y, block, density, prop, treat, data, FG, family, estimate_theta, nSpecies, total, extra_formula = 0) {
+DI_E <- function(y, block, density, prop, treat, data, FG, ID, family, estimate_theta, nSpecies, total, extra_formula = 0) {
   DIinternalcall <- match.call()
   
   if(density != "density_zero") {
@@ -425,10 +435,10 @@ DI_E <- function(y, block, density, prop, treat, data, FG, family, estimate_thet
   }
   if(!any(names(data) == "E")) stop("'E' variable not found in dataset.")
   if(block == "block_zero") {
-    fmla_E <- as.formula(paste(y, "~", "0+", paste(prop, collapse = "+"), "+E",
+    fmla_E <- as.formula(paste(y, "~", "0+", paste(ID, collapse = "+"), "+E",
                                "+", extra_terms)) 
   } else {
-    fmla_E <- as.formula(paste(y, "~", "0+", paste(prop, collapse = "+"), "+E+", block,
+    fmla_E <- as.formula(paste(y, "~", "0+", paste(ID, collapse = "+"), "+E+", block,
                                "+", extra_terms))
   }
   # check design matrix and fit model
@@ -438,7 +448,7 @@ DI_E <- function(y, block, density, prop, treat, data, FG, family, estimate_thet
   modlist <- list("model" = mod_E)
   modlist$model$DIinternalcall <- DIinternalcall
   if(estimate_theta) {
-    modlist$theta <- DI_theta(obj = mod_E, DImodel = "E",
+    modlist$theta <- DI_theta(obj = mod_E, DImodel = "E", prop = prop,
                               nSpecies = nSpecies, family = family)
     modlist$theta$DIinternalcall <- DIinternalcall
     # RV change
@@ -447,7 +457,7 @@ DI_E <- function(y, block, density, prop, treat, data, FG, family, estimate_thet
   return(modlist)
 }
 
-DI_E_treat <- function(y, block, density, prop, treat, data, FG, family, estimate_theta, nSpecies, total, extra_formula = 0) {
+DI_E_treat <- function(y, block, density, prop, treat, data, FG, ID, family, estimate_theta, nSpecies, total, extra_formula = 0) {
   DIinternalcall <- match.call()
   
   if(density != "density_zero") {
@@ -469,10 +479,10 @@ DI_E_treat <- function(y, block, density, prop, treat, data, FG, family, estimat
   }
   if(!any(names(data) == "E")) stop("'E' variable not found in dataset.")
   if(block == "block_zero") {
-    fmla_E_treat <- as.formula(paste(y, "~", "0+", paste(prop, collapse = "+"), "+E+", treat,
+    fmla_E_treat <- as.formula(paste(y, "~", "0+", paste(ID, collapse = "+"), "+E+", treat,
                                      "+", extra_terms)) 
   } else {
-    fmla_E_treat <- as.formula(paste(y, "~", "0+", paste(prop, collapse = "+"), "+E+", block, "+", treat,
+    fmla_E_treat <- as.formula(paste(y, "~", "0+", paste(ID, collapse = "+"), "+E+", block, "+", treat,
                                      "+", extra_terms))
   }
   # check design matrix and fit model
@@ -482,7 +492,7 @@ DI_E_treat <- function(y, block, density, prop, treat, data, FG, family, estimat
   modlist <- list("model" = mod_E_treat)
   modlist$model$DIinternalcall <- DIinternalcall
   if(estimate_theta) {
-    modlist$theta <- DI_theta(obj = mod_E_treat, DImodel = "E",
+    modlist$theta <- DI_theta(obj = mod_E_treat, DImodel = "E", prop = prop,
                               nSpecies = nSpecies, family = family)
     modlist$theta$DIinternalcall <- DIinternalcall 
     # RV change
@@ -491,7 +501,7 @@ DI_E_treat <- function(y, block, density, prop, treat, data, FG, family, estimat
   return(modlist)
 }
 
-DI_FG <- function(y, block, density, prop, treat, FG, data, family, estimate_theta, nSpecies, total, FGnames, extra_formula = 0) {
+DI_FG <- function(y, block, density, prop, treat, FG, ID, data, family, estimate_theta, nSpecies, total, FGnames, extra_formula = 0) {
   DIinternalcall <- match.call()
   
   if(density != "density_zero") {
@@ -514,10 +524,10 @@ DI_FG <- function(y, block, density, prop, treat, FG, data, family, estimate_the
   if(is.null(FG)) stop("FG matrix not found")
   #FG_ <- FG
   if(block == "block_zero") {
-    fmla_FG <- as.formula(paste(y, "~", "0+", paste(prop, collapse = "+"), "+FG_",
+    fmla_FG <- as.formula(paste(y, "~", "0+", paste(ID, collapse = "+"), "+FG_",
                                 "+", extra_terms))
   } else {
-    fmla_FG <- as.formula(paste(y, "~", "0+", paste(prop, collapse = "+"), "+FG_+", block,
+    fmla_FG <- as.formula(paste(y, "~", "0+", paste(ID, collapse = "+"), "+FG_+", block,
                                 "+", extra_terms))
   }
   # check design matrix and fit model
@@ -527,7 +537,7 @@ DI_FG <- function(y, block, density, prop, treat, FG, data, family, estimate_the
   modlist <- list("model" = mod_FG)
   modlist$model$DIinternalcall <- DIinternalcall
   if(estimate_theta) {
-    modlist$theta <- DI_theta(obj = mod_FG, DImodel = "FG", FGnames = FGnames,
+    modlist$theta <- DI_theta(obj = mod_FG, DImodel = "FG", prop = prop, FGnames = FGnames,
                               nSpecies = nSpecies, family = family)
     modlist$theta$DIinternalcall <- DIinternalcall
     # RV change
@@ -536,7 +546,7 @@ DI_FG <- function(y, block, density, prop, treat, FG, data, family, estimate_the
   return(modlist)
 }
 
-DI_FG_treat <- function(y, block, density, prop, treat, FG, data, family, estimate_theta, nSpecies, total, FGnames, extra_formula = 0) {
+DI_FG_treat <- function(y, block, density, prop, treat, FG, ID, data, family, estimate_theta, nSpecies, total, FGnames, extra_formula = 0) {
   DIinternalcall <- match.call()
   
   if(density != "density_zero") {
@@ -559,10 +569,10 @@ DI_FG_treat <- function(y, block, density, prop, treat, FG, data, family, estima
   if(is.null(FG)) stop("FG matrix not found")
   #FG_ <- FG
   if(block == "block_zero") {
-    fmla_FG_treat <- as.formula(paste(y, "~", "0+", paste(prop, collapse = "+"), "+FG_+", treat,
+    fmla_FG_treat <- as.formula(paste(y, "~", "0+", paste(ID, collapse = "+"), "+FG_+", treat,
                                       "+", extra_terms))
   } else {
-    fmla_FG_treat <- as.formula(paste(y, "~", "0+", paste(prop, collapse = "+"), "+FG_+", block, "+", treat,
+    fmla_FG_treat <- as.formula(paste(y, "~", "0+", paste(ID, collapse = "+"), "+FG_+", block, "+", treat,
                                       "+", extra_terms))
   }
   # check design matrix and fit model
@@ -572,7 +582,7 @@ DI_FG_treat <- function(y, block, density, prop, treat, FG, data, family, estima
   modlist <- list("model" = mod_FG_treat)
   modlist$model$DIinternalcall <- DIinternalcall
   if(estimate_theta) {
-    modlist$theta <- DI_theta(obj = mod_FG_treat, DImodel = "FG", FGnames = FGnames,
+    modlist$theta <- DI_theta(obj = mod_FG_treat, DImodel = "FG", prop = prop, FGnames = FGnames,
                               nSpecies = nSpecies, family = family)
     modlist$theta$DIinternalcall <- DIinternalcall
     # RV change
@@ -581,7 +591,7 @@ DI_FG_treat <- function(y, block, density, prop, treat, FG, data, family, estima
   return(modlist)
 }
 
-DI_ADD <- function(y, block, density, prop, treat, FG, data, family, estimate_theta, nSpecies, total, extra_formula = 0) {
+DI_ADD <- function(y, block, density, prop, treat, FG, ID, data, family, estimate_theta, nSpecies, total, extra_formula = 0) {
   DIinternalcall <- match.call()
   
   if(density != "density_zero") {
@@ -607,12 +617,12 @@ DI_ADD <- function(y, block, density, prop, treat, FG, data, family, estimate_th
     stop("P_int variables not found in dataset.")
   if(block == "block_zero") {
     fmla_ADD <- as.formula(paste(y, "~", "0+", 
-                                    paste(prop, collapse = "+"), "+",
+                                    paste(ID, collapse = "+"), "+",
                                     paste0(prop, "_add", collapse = "+"),
                                  "+", extra_terms))
   } else {
     fmla_ADD <- as.formula(paste(y, "~", "0+",
-                                    paste(prop, collapse = "+"), "+",
+                                    paste(ID, collapse = "+"), "+",
                                     paste0(prop, "_add", collapse = "+"), "+", block,
                                  "+", extra_terms))
   }
@@ -623,7 +633,7 @@ DI_ADD <- function(y, block, density, prop, treat, FG, data, family, estimate_th
   modlist <- list("model" = mod_ADD)
   modlist$model$DIinternalcall <- DIinternalcall
   if(estimate_theta) {
-    modlist$theta <- DI_theta(obj = mod_ADD, DImodel = "ADD",
+    modlist$theta <- DI_theta(obj = mod_ADD, DImodel = "ADD", prop = prop,
                               nSpecies = nSpecies, family = family)
     modlist$theta$DIinternalcall <- DIinternalcall
     # RV change
@@ -632,7 +642,7 @@ DI_ADD <- function(y, block, density, prop, treat, FG, data, family, estimate_th
   return(modlist)
 }
 
-DI_ADD_treat <- function(y, block, density, prop, treat, FG, data, family, estimate_theta, nSpecies, total, extra_formula = 0) {
+DI_ADD_treat <- function(y, block, density, prop, treat, FG, ID, data, family, estimate_theta, nSpecies, total, extra_formula = 0) {
   DIinternalcall <- match.call()
   
   if(density != "density_zero") {
@@ -658,12 +668,12 @@ DI_ADD_treat <- function(y, block, density, prop, treat, FG, data, family, estim
     stop("P_int variables not found in dataset.")
   if(block == "block_zero") {
     fmla_ADD_treat <- as.formula(paste(y, "~", "0+",
-                                     paste(prop, collapse = "+"), "+",
+                                     paste(ID, collapse = "+"), "+",
                                      paste0(prop, "_add", collapse = "+"), "+", treat,
                                      "+", extra_terms))
   } else {
     fmla_ADD_treat <- as.formula(paste(y, "~", "0+", 
-                                     paste(prop, collapse = "+"), "+",
+                                     paste(ID, collapse = "+"), "+",
                                      paste0(prop, "_add", collapse = "+"), "+", block, "+", treat,
                                      "+", extra_terms))
   }
@@ -674,7 +684,7 @@ DI_ADD_treat <- function(y, block, density, prop, treat, FG, data, family, estim
   modlist <- list("model" = mod_ADD_treat)
   modlist$model$DIinternalcall <- DIinternalcall
   if(estimate_theta) {
-    modlist$theta <- DI_theta(obj = mod_ADD_treat, DImodel = "ADD",
+    modlist$theta <- DI_theta(obj = mod_ADD_treat, DImodel = "ADD",  prop = prop,
                               nSpecies = nSpecies, family = family)
     modlist$theta$DIinternalcall <- DIinternalcall
     # RV change
@@ -683,7 +693,7 @@ DI_ADD_treat <- function(y, block, density, prop, treat, FG, data, family, estim
   return(modlist)
 }
 
-DI_FULL <- function(y, block, density, prop, treat, FG, data, family, estimate_theta, nSpecies, total, extra_formula = 0) {
+DI_FULL <- function(y, block, density, prop, treat, FG, ID, data, family, estimate_theta, nSpecies, total, extra_formula = 0) {
   DIinternalcall <- match.call()
   
   # Getting the FULL variables
@@ -710,12 +720,12 @@ DI_FULL <- function(y, block, density, prop, treat, FG, data, family, estimate_t
   }
   if(block == "block_zero") {
     fmla_FULL <- as.formula(paste(y, "~", "0+", 
-                                  paste(prop, collapse = "+"), "+",
+                                  paste(ID, collapse = "+"), "+",
                                   paste0(full_names, collapse = "+"),
                                   "+", extra_terms))
   } else {
     fmla_FULL <- as.formula(paste(y, "~", "0+",
-                                  paste(prop, collapse = "+"), "+",
+                                  paste(ID, collapse = "+"), "+",
                                   paste0(full_names, collapse = "+"), "+", block,
                                   "+", extra_terms))
   }
@@ -735,7 +745,7 @@ DI_FULL <- function(y, block, density, prop, treat, FG, data, family, estimate_t
   return(modlist)
 }
 
-DI_FULL_treat <- function(y, block, density, prop, treat, FG, data, family, estimate_theta, nSpecies, total, extra_formula = 0) {
+DI_FULL_treat <- function(y, block, density, prop, treat, FG, ID, data, family, estimate_theta, nSpecies, total, extra_formula = 0) {
   DIinternalcall <- match.call()
   
   # Getting the FULL variables
@@ -761,12 +771,12 @@ DI_FULL_treat <- function(y, block, density, prop, treat, FG, data, family, esti
   }
   if(block == "block_zero") {
     fmla_FULL_treat <- as.formula(paste(y, "~", "0+",
-                                        paste(prop, collapse = "+"), "+",
+                                        paste(ID, collapse = "+"), "+",
                                         paste0(full_names, collapse = "+"), "+", treat,
                                         "+", extra_terms))
   } else {
     fmla_FULL_treat <- as.formula(paste(y, "~", "0+", 
-                                        paste(prop, collapse = "+"), "+",
+                                        paste(ID, collapse = "+"), "+",
                                         paste0(full_names, collapse = "+"), "+", block, "+", treat,
                                         "+", extra_terms))
   }

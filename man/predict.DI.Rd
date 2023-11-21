@@ -8,14 +8,20 @@ Predict Method for Diversity-Interactions (DI) Models
 Generates predictions for a fitted DI models object and, optionally, the associated standard errors for those predictions.
 }
 \usage{
-\method{predict}{DI}(object, newdata, se.fit = FALSE, type = c("link", "response"), ...)
+\method{predict}{DI}(object, newdata, se.fit = FALSE,
+interval = c("none", "confidence", "prediction"), 
+level = 0.95, weights = 1,
+type = c("link", "response", "terms"), ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{object}{a \code{\link{DI}} or \code{\link{autoDI}} model object.}
   \item{newdata}{optionally, a data frame in which to look for variables with which to predict. If omitted, predictions will be made for data used to fit the model.}
-  \item{se.fit}{logical switch indicating whether to calculate the associated standard errors}
-  \item{type}{the type of prediction required. The default is on the scale of the linear predictors; the alternative "response" is on the scale of the response variable.}
+  \item{se.fit}{A logical switch indicating whether to calculate the associated standard errors.}
+  \item{interval}{The type of interval to be calculated. Accepts one of "none", "confidence" or "prediction", with "none"" being the default.}
+  \item{level}{The level (1 - \eqn{\alpha}) at which to calculate the interval. Defaults to 0.95, giving a 95\% interval.}
+  \item{weights}{The variance weights for calculating the prediction intervals. By default all values get the same weight of 1. Can also specify a numeric vector of same length as number of rows in \code{newdata}.}
+  \item{type}{the type of prediction required. One of "link", "response" or "terms". The default "link" is on the scale of the linear predictors while "response" is on the scale of the response variable. The "terms" option returns a matrix giving the fitted values of each term in the model formula on the linear predictor scale.}
   \item{...}{further arguments passed to or from other methods. For eg: \code{dispersion} or \code{na.action} arguments from \code{\link[stats]{predict.glm}} function.}
 }
 \details{

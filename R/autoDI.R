@@ -7,7 +7,7 @@
 # selection = "Ftest" to perform F (or X2) tests to select best model,
 #             "AIC" to use select model with smallest AIC
 
-autoDI <- function(y, prop, data, block, density, treat, FG = NULL, 
+autoDI <- function(y, prop, data, block, density, treat, ID, FG = NULL, 
                    selection = c("Ftest","AIC","AICc","BIC","BICc"), 
                    step0 = FALSE, step4 = TRUE) {
   if(missing(y)) stop("You must supply a response variable name or column index through the argument 'y'.\n")
@@ -57,6 +57,15 @@ autoDI <- function(y, prop, data, block, density, treat, FG = NULL,
   if(missing(FG)){
     FG <- NULL
   }
+
+  if(missing(ID)){
+    if(is.numeric(prop)){
+      ID <- paste0(colnames(data)[prop], "_ID")
+    }
+    else {
+      ID <- paste0(prop, "_ID")
+    }
+  }
   
   # Step 0
   if(step0) {
@@ -64,13 +73,13 @@ autoDI <- function(y, prop, data, block, density, treat, FG = NULL,
   }
   
   # Step 1
-  step1_model <- autoDI_step1(y = y, block = block, density = density, prop = prop, treat = treat, family = family, data = data, selection = selection)
+  step1_model <- autoDI_step1(y = y, block = block, density = density, prop = prop, treat = treat, ID = ID, family = family, data = data, selection = selection)
   
   selected_model <- step1_model$model
   theta_flag <- step1_model$theta_flag
   
   # step 2
-  step2_model <- autoDI_step2(y = y, block = block, density = density, prop = prop, treat = treat, family = family, FG = FG, data = data, theta_flag = theta_flag, selection = selection, selected_model = selected_model)
+  step2_model <- autoDI_step2(y = y, block = block, density = density, prop = prop, treat = treat, ID = ID, family = family, FG = FG, data = data, theta_flag = theta_flag, selection = selection, selected_model = selected_model)
   
   # step 3
   step3_model <- autoDI_step3(selected_model = step2_model, selection = selection, family = family)

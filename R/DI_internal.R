@@ -44,14 +44,14 @@ DI_check_and_fit <- function(fmla, y, block, density, treat, family, data, FG) {
   return(mod)
 }
 
-proflik_theta <- function(theta, obj, family, int_terms, DImodel, nSpecies, FGnames) {
+proflik_theta <- function(theta, obj, family, int_terms, prop, DImodel, nSpecies, FGnames) {
   mm <- model.matrix(obj)
   
   if(DImodel %in% c("E","AV")) {
     data_theta_E_AV <- obj$data
     data_theta <- data.frame(mm)
-    data_theta[1:nSpecies] <- data_theta[1:nSpecies]^theta
-    new_E_AV <- DI_data_E_AV_internal(prop = 1:nSpecies, data = data_theta)
+    #data_theta[1:nSpecies] <- data_theta[1:nSpecies]^theta
+    new_E_AV <- DI_data_E_AV(prop = prop, data = data_theta_E_AV, theta = theta)
     data_theta_E_AV$E <- new_E_AV$E
     data_theta_E_AV$AV <- new_E_AV$AV
     fitted_model_theta <- glm(formula(obj), family = family, data = data_theta_E_AV)
@@ -64,10 +64,14 @@ proflik_theta <- function(theta, obj, family, int_terms, DImodel, nSpecies, FGna
     sigma_hat <- sqrt(sum(fitted_model_theta$residuals^2)/(fitted_model_theta$df.residual) * (n - p)/n)
     llik <- sum(dnorm(fitted_model_theta$y, mu_hat, sigma_hat, log = TRUE))
   } else if(DImodel == "FG") {
-    data_theta_FG <- obj$data
-    data_theta <- data.frame(mm)
-    data_theta[1:nSpecies] <- data_theta[1:nSpecies]^theta
-    new_FG <- DI_data_FG_internal(prop = 1:nSpecies, FG = FGnames, data = data_theta)
+    #data_theta_FG <- obj$data
+    data_theta_FG <- data.frame(mm, check.names = FALSE)
+    colnames(data_theta_FG) <- gsub("`", "", colnames(data_theta_FG))
+    # Add original props to calculate interactions
+    data_theta_FG <- cbind(data_theta_FG, obj$data[, prop])
+    
+    #data_theta[1:nSpecies] <- data_theta[1:nSpecies]^theta
+    new_FG <- DI_data_FG(prop = prop, FG = FGnames, data = data_theta_FG[, prop], theta = theta)
     FG_ <- new_FG$FG
     ## if we have column names starting with FG_ already
     ## in data_theta_FG, then substitute columns else it's all good
@@ -84,6 +88,10 @@ proflik_theta <- function(theta, obj, family, int_terms, DImodel, nSpecies, FGna
     }
     old_formula <- formula(obj)
     new_formula <- paste0(old_formula[2], " ~ ", old_formula[3])
+    
+    data_theta_FG$y <- obj$y
+    names(data_theta_FG)[length(names(data_theta_FG))] <- paste(old_formula[2])
+    
     fitted_model_theta <- glm(as.formula(new_formula), family = family, data = data_theta_FG)
     #mu_hat <- fitted(fitted_model_theta)
     #sigma_hat <- sqrt(sum(fitted_model_theta$residuals^2)/(fitted_model_theta$df.residual-1))
@@ -95,8 +103,10 @@ proflik_theta <- function(theta, obj, family, int_terms, DImodel, nSpecies, FGna
     llik <- sum(dnorm(fitted_model_theta$y, mu_hat, sigma_hat, log = TRUE))
   } else if(DImodel == "ADD") {
     #data_theta_ADD <- obj$data
+    # Drop existing _add columns to avoid conflicts
     data_theta <- data.frame(mm, check.names = FALSE)
-    new_ADD <- DI_data_ADD_theta(prop = 1:nSpecies, data = data_theta, theta = theta)
+    data_theta <- cbind(data_theta, obj$data[, prop])
+    new_ADD <- DI_data_ADD_theta(prop = prop, data = data_theta, theta = theta)
     ADD_cols_in_the_data <- int_terms #grep("_add", colnames(data_theta))
     if(length(ADD_cols_in_the_data) > 0) {
       j <- 1
@@ -172,7 +182,8 @@ DI_theta <- function(obj, DImodel, FGnames, prop, nSpecies, family) {
   #options(warn = -1)
   upper_boundary <- 1.5
   theta_info <- get_theta_info(upper_boundary = upper_boundary, DImodel = DImodel,
-                               obj = obj, family = family, int_terms = int_terms,
+                               obj = obj, prop = prop, 
+                               family = family, int_terms = int_terms, 
                                nSpecies = nSpecies, FGnames = FGnames)
   #options(warn = 0)
   theta_hat <- theta_info$theta_hat
@@ -184,16 +195,18 @@ DI_theta <- function(obj, DImodel, FGnames, prop, nSpecies, family) {
   if(DImodel %in% c("E","AV")) {
     data_theta_E_AV <- obj$data
     data_theta <- data.frame(mm)
-    data_theta[1:nSpecies] <- data_theta[1:nSpecies]^theta_hat
-    new_E_AV <- DI_data_E_AV_internal(prop = 1:nSpecies, data = data_theta)
+    #data_theta[1:nSpecies] <- data_theta[1:nSpecies]^theta_hat
+    new_E_AV <- DI_data_E_AV(prop = prop, data = data_theta_E_AV, theta = theta_hat)
     data_theta_E_AV$E <- new_E_AV$E
     data_theta_E_AV$AV <- new_E_AV$AV
     mod_theta <- glm(formula(obj), family = family, data = data_theta_E_AV)
   } else if(DImodel == "FG") {
-    data_theta_FG <- obj$data
-    data_theta <- data.frame(mm)
-    data_theta[1:nSpecies] <- data_theta[1:nSpecies]^theta_hat
-    new_FG <- DI_data_FG_internal(prop = 1:nSpecies, FG = FGnames, data = data_theta)
+    #data_theta_FG <- obj$data
+    data_theta_FG <- data.frame(mm, check.names = FALSE)
+    colnames(data_theta_FG) <- gsub("`", "", colnames(data_theta_FG))
+    data_theta_FG <- cbind(data_theta_FG, obj$data[, prop])
+    #data_theta[1:nSpecies] <- data_theta[1:nSpecies]^theta_hat
+    new_FG <- DI_data_FG(prop = prop, FG = FGnames, theta = theta_hat, data = data_theta_FG)
     FG_ <- new_FG$FG
     ## if we have column names starting with FG_ already
     ## in data_theta_FG, then substitute columns, else it's all good
@@ -207,11 +220,14 @@ DI_theta <- function(obj, DImodel, FGnames, prop, nSpecies, family) {
     }
     old_formula <- formula(obj)
     new_formula <- paste0(old_formula[2], " ~ ", old_formula[3])
+    data_theta_FG$y <- obj$y
+    names(data_theta_FG)[length(names(data_theta_FG))] <- paste(old_formula[2])
     mod_theta <- glm(as.formula(new_formula), family = family, data = data_theta_FG)
   } else if(DImodel == "ADD") {
     #data_theta_ADD <- obj$data
     data_theta <- data.frame(mm, check.names = FALSE)
-    new_ADD <- DI_data_ADD_theta(prop = 1:nSpecies, data = data_theta, theta = theta_hat)
+    data_theta <- cbind(data_theta, obj$data[, prop])
+    new_ADD <- DI_data_ADD_theta(prop = prop, data = data_theta, theta = theta_hat)
     ADD_cols_in_the_data <- int_terms #grep("_add", colnames(data_theta))
     if(length(ADD_cols_in_the_data) > 0) {
       j <- 1
@@ -250,15 +266,15 @@ DI_theta <- function(obj, DImodel, FGnames, prop, nSpecies, family) {
   return(mod_theta)
 }
 
-get_theta_info <- function(upper_boundary, DImodel, obj, family, int_terms,
+get_theta_info <- function(upper_boundary, DImodel, obj, prop, family, int_terms,
                            nSpecies, FGnames) {
   optimum <- optimize(proflik_theta, interval = c(0.00001, upper_boundary), 
-                      maximum = TRUE, DImodel = DImodel, obj = obj, family = family, 
+                      maximum = TRUE, DImodel = DImodel, obj = obj, prop = prop, family = family, 
                       int_terms = int_terms, nSpecies = nSpecies, FGnames = FGnames)
   theta_hat <- optimum$maximum
   theta_grid <- seq(0.00001, upper_boundary + 1, length = 100)
   proflik_theta_vec <- Vectorize(proflik_theta, "theta")
-  profile_loglik <- proflik_theta_vec(theta = theta_grid, obj = obj, 
+  profile_loglik <- proflik_theta_vec(theta = theta_grid, obj = obj, prop = prop,
                                       family = family, int_terms = int_terms, DImodel = DImodel, 
                                       nSpecies = nSpecies, FGnames = FGnames)
   

@@ -11,7 +11,7 @@ This function provides an automated way to fit a (limited) range of Diversity-In
 
 }
 \usage{
-autoDI(y, prop, data, block, density, treat, FG = NULL, 
+autoDI(y, prop, data, block, density, treat, ID, FG = NULL, 
        selection = c("Ftest","AIC","AICc","BIC","BICc"), 
        step0 = FALSE, step4 = TRUE)
 }
@@ -36,6 +36,18 @@ A vector of \emph{s} column names identifying the species proportions in each ro
   \item{treat}{
 %%     ~~Describe \code{prop} here~~
 The name of a column in the dataset containing the value of a treatment factor or covariate. The treatment name must be included in quotes, for example, \code{treat = "nitrogen"}. (Only one treatment or covariate is permitted in \code{autoDI}, but see \code{DI} for options involving more than one treatment.) If the treatment is a factor, the variable must already be specified as a factor prior to using \code{autoDI}. 
+}
+  \item{ID}{
+  %%     ~~Describe \code{ID} here~~
+This argument takes a text list (of length \emph{s}) dsecirbing groupings for the identity effects of the species. For example, if there are four species and you wish to group the identity effects all four species into a single term: \code{ID} could be \code{ID = c("ID1","ID1","ID1","ID1")}, where "ID1" is the name of the ID group. Similarly if the we wish to have two identity effect groups where identity effect of species 1 and 3, and species 2 and 4 are grouped together: \code{ID} could be \code{ID = c("ID1","ID2","ID1","ID2")}, where "ID1" and "ID2" are the names of the ID groups. These ideas expand to any number of species and any number or combination of groups. Finally, the ID groups do not have to be named "ID1" and "ID2", the user can specify any name for the groups.
+
+  \itemize{
+   \item If the \code{ID} argument is not specified, each species will be assumed to have a separate identity effect. 
+   
+   \item Specify an grouping for the ID does not affect the interaction terms. The interactions are still calculated using the individual species proportions.
+
+  \item The \code{ID} argument is defunct when using the \code{custom_formula} argument, since species identity effects must be included directly in the \code{custom_formula} argument. 
+}
 }
   \item{FG}{
 %%     ~~Describe \code{FG} here~~
@@ -184,6 +196,15 @@ The \code{\link{Switzerland}} dataset examples. }
                   treat = "nitrogen", FG = c("G", "G", "L", "L"), data = Switzerland, 
                   selection = "Ftest")
   summary(auto1)
+  
+## Running autoDI after grouping identity effects using the "ID" argument
+  auto2 <- autoDI(y = "yield", density = "density", 
+                  prop = c("p1","p2","p3","p4"), 
+                  treat = "nitrogen", ID = c("ID1", "ID1", "ID1", "ID1"),
+                  FG = c("G", "G", "L", "L"), data = Switzerland, 
+                  selection = "Ftest")
+  summary(auto2)
+
   
 \donttest{
 ## Using column numbers to indicate which columns contain the proportions and including Step 0

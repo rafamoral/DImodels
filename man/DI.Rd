@@ -31,7 +31,7 @@ This function will fit a wide range of Diversity-Interactions (DI) models, one a
 
 \usage{
 DI(y, prop, DImodel, custom_formula, data,
-   block, density, treat, FG, extra_formula,
+   block, density, treat, ID, FG, extra_formula,
    estimate_theta = FALSE, theta = 1)
 }
 
@@ -71,6 +71,18 @@ The name of a column in the dataset containing the value of a treatment factor o
 When used in conjunction with \code{DImodel}, the treatment will be included in the model as an additive factor or covariate, for example, specifying \code{treat = nitrogen, DImodel = ID} will fit the model \code{p1 + p2 + ... + ps + nitrogen}. Additional treatments, or interactions between the treatment and other model terms can be included via the \code{extra_formula} argument.
 
 \item The \code{treat} argument is defunct when using the \code{custom_formula} argument, and any treatment must be included directly in the \code{custom_formula} argument.
+}
+}
+  \item{ID}{
+  %%     ~~Describe \code{ID} here~~
+This argument takes a text list (of length \emph{s}) dsecirbing groupings for the identity effects of the species. For example, if there are four species and you wish to group the identity effects all four species into a single term: \code{ID} could be \code{ID = c("ID1","ID1","ID1","ID1")}, where "ID1" is the name of the ID group. Similarly if the we wish to have two identity effect groups where identity effect of species 1 and 3, and species 2 and 4 are grouped together: \code{ID} could be \code{ID = c("ID1","ID2","ID1","ID2")}, where "ID1" and "ID2" are the names of the ID groups. These ideas expand to any number of species and any number or combination of groups. Finally, the ID groups do not have to be named "ID1" and "ID2", the user can specify any name for the groups.
+
+  \itemize{
+   \item If the \code{ID} argument is not specified, each species will be assumed to have a separate identity effect. 
+   
+   \item Specify an grouping for the ID does not affect the interaction terms. The interactions are still calculated using the individual species proportions.
+
+  \item The \code{ID} argument is defunct when using the \code{custom_formula} argument, since species identity effects must be included directly in the \code{custom_formula} argument. 
 }
 }
   \item{FG}{
@@ -211,14 +223,32 @@ data(Switzerland)
 Switzerlandsums <- rowSums(Switzerland[4:7])
 summary(Switzerlandsums)
 
+## Fit the a simple AV DImodel with theta = 1
+mod <- DI(y = "yield", prop = c("p1", "p2", "p3", "p4"), 
+          DImodel = "AV", data = Switzerland)
+summary(mod)
+
+## Fit the same model but group the 4 species identity effect into 2 groups
+mod <- DI(y = "yield", prop = c("p1", "p2", "p3", "p4"), 
+          ID = c("ID1", "ID1", "ID2", "ID2"), DImodel = "AV", 
+          data = Switzerland)
+summary(mod)
+
+## Combine the four identity effects into a single term and estimate theta
+mod <- DI(y = "yield", prop = c("p1", "p2", "p3", "p4"), 
+          ID = c("ID1", "ID1", "ID1", "ID1"), DImodel = "AV", 
+          estimate_theta = TRUE, data = Switzerland)
+summary(mod)
+
 ## Fit the FG DImodel, with factors density and treatment, and with theta = 1
 m1 <- DI(y = "yield", density = "density", prop = 4:7, treat = "nitrogen", 
          FG = c("G","G","L","L"), DImodel = "FG", data = Switzerland)
 summary(m1)
 
-## Fit the FG DImodel, with factors density and treatment, and theta estimated
+## Fit the FG DImodel, with factors density and treatment, and a fixed value of theta not equal to 1
 m2 <- DI(y = "yield", density = "density", prop = 4:7, treat = "nitrogen", 
-         FG = c("G","G","L","L"), DImodel = "FG", data = Switzerland, estimate_theta = TRUE)
+         FG = c("G","G","L","L"), DImodel = "FG", data = Switzerland, 
+         theta = 0.5)
 summary(m2)
 
 ## Test if the identity effects interact with nitrogen (and main effect of nitrogen excluded)

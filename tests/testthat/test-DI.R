@@ -36,14 +36,14 @@ test_that("DI works with \"E\" model", {
                density = "density", DImodel = "E",
                extra_formula = ~p1:nitrogen, data = Switzerland)
   expect_equal(mod_E$coef,
-               c(8.19821278836538, 8.52407309971615, 15.4175280362485, 11.9330267505285, 5.155459, -0.640652903945622, 0.137755987617647, 0.400343881654642),
+               c(8.5985566700200202, 8.52407309971615, 15.4175280362485392, 11.9330267505285228, 5.1554594166571261, -0.6406529039456219, 0.13775598761764632, -0.4003438816546424),
                ignore_attr = TRUE)
 
   mod_E <- DI(y = "yield", prop = 4:7, block = "nitrogen",
                density = "density", DImodel = "E",
                extra_formula = ~p1:nitrogen, data = Switzerland)
   expect_equal(mod_E$coef,
-               c(8.19821278836538, 8.52407309971615, 15.4175280362485, 11.9330267505285, 5.155459, -0.640652903945622, 0.137755987617647, 0.400343881654642),
+               c(8.5985566700200202, 8.52407309971615, 15.4175280362485392, 11.9330267505285228, 5.1554594166571261, -0.6406529039456219, 0.13775598761764632, -0.4003438816546424),
                ignore_attr = TRUE)
 
   mod_E <- DI(y = "yield", prop = 4:7, estimate_theta = T,
@@ -179,6 +179,53 @@ test_that("FG model works with theta", {
                ignore_attr = TRUE)
   #7.88878936443855, 8.13813336178581, 14.8891259779366, 12.6461205094352, 10.1178646560904, 8.6203635154537, 9.72765733434199, 0.0780837425347466
   
+})
+
+## Ensure specific models can't be fit for models with less than four species
+test_that("Correct number of species are present", {
+  data("sim1")
+  
+  sim1$p5 <- 1 - sim1$p1
+  sim1$p6 <- 1 - sim1$p1 - sim1$p2
+  
+  expect_error(DI(data = sim1, y = "response", 
+                  prop = c("p1", "p5"), 
+                  DImodel= "E"),
+               "you must have > 2 species to fit model E")
+
+  expect_error(DI(data = sim1, y = "response", 
+                  prop = c("p1", "p5"), 
+                  DImodel= "AV"),
+               "you must have > 2 species to fit model AV")
+  
+  expect_error(DI(data = sim1, y = "response", 
+                  prop = c("p1", "p5"), 
+                  DImodel= "FG",
+                  FG = c("G", "G")),
+               "you must have > 2 species to fit model FG")
+  
+  expect_error(DI(data = sim1, y = "response", 
+                  prop = c("p1", "p2", "p6"), 
+                  DImodel= "ADD"),
+               "you must have > 3 species to fit model ADD")
+
+})
+
+## Richness vs DI works
+test_that("Richness vs DI works", {
+  data("Switzerland")
+  
+  ## compare the richness model with DI alternatives
+  t1 <- richness_vs_DI(y = "yield", prop = 4:7, data = Switzerland)
+  m1 <- DI(y = "yield", prop = 4:7, data = Switzerland,
+           DImodel = "AV", estimate_theta = TRUE)
+  expect_equal(t1$coefficients, m1$coefficients)
+    
+  ## include the density effects in the linear predictors of the four models
+  t2 <- richness_vs_DI(y = "yield", prop = 4:7, data = Switzerland, extra_formula = ~ density)
+  m2 <- DI(y = "yield", prop = 4:7, data = Switzerland, DImodel = "AV",
+           extra_formula = ~ density, estimate_theta = TRUE)
+  expect_equal(t2$coefficients, m2$coefficients)
 })
 
 ## S3 methods for class DI (extract, AIC, BIC)

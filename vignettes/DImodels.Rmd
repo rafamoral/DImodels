@@ -22,7 +22,19 @@ library(DImodels)
 
 The `DImodels` package is designed to make fitting Diversity-Interactions models easier. Diversity-Interactions (DI) models (Kirwan et al 2009) are a set of tools for analysing and interpreting data from experiments that explore the effects of species diversity (from a pool of *S* species) on community-level responses. Data suitable for DI models will include (at least) for each experimental unit: a response recorded at a point in time, and a set of proportions of *S* species  $p_1$, $p_2$, ..., $p_S$ from a point in time prior to the recording of the response. The proportions sum to 1 for each experimental unit.   
 
-__Main changes in the package from version 1.0 to version 1.1 and newer__
+
+__Main changes in the package from version 1.2 to version 1.3__
+
+- The `DI` and `autoDI` functions now have an additional parameter called `ID` which enables the user to group the species identity effects (see examples below).
+- The `predict` function now has flexibility to calculate confidence and prediction intervals for the predicted values.
+
+__Main changes in the package from version 1.1 to version 1.2__
+
+- There are two new functions added to the package:
+     - `predict`: Make predictions from a fitted DI model without having to worry about theta, and the interaction terms in the data.
+     - `contrasts_DI`: Create contrasts for a DI model.
+     
+__Main changes in the package from version 1.0 to version 1.1__
 
 - `DI_data_prepare` is now superseded by `DI_data` (see examples below)
 
@@ -158,6 +170,36 @@ m1_theta <- update_DI(object = m1, estimate_theta = TRUE)
 coef(m1_theta)
 ```
 
+### Grouping the species identity effects in the model
+The species identity effects in a DI model can be grouped by specifying groups for each species using the `ID` argument.
+The `ID` argument functions similar to the `FG` argument and accepts a character list of same length as number of species in the model. The identity effects of species belonging in the same group will be grouped together.
+
+Grouping all identity effects into a single term
+```{r, echo = TRUE}
+m1_group <- update_DI(object = m1_theta, 
+                      ID = c("ID1", "ID1", "ID1", "ID1", "ID1",
+                             "ID1", "ID1", "ID1", "ID1"))
+coef(m1_group)
+```
+
+Grouping identity effects of specific species
+```{r, echo = TRUE}
+m1_group2 <- update_DI(object = m1_theta, 
+                       ID = c("ID1", "ID1", "ID1", 
+                              "ID2", "ID2", "ID2", 
+                              "ID3", "ID3", "ID3"))
+coef(m1_group2)
+```
+
+Note: Grouping ID effects will not have an effect on the calculation of the interaction effects, they would still be calculated by using all species.
+
+Read the documentation of `DI` and `autoDI` for more information and examples using the `ID` parameter.
+```{r, eval = FALSE}
+?DI
+?autoDI
+```
+
+
 ## Fitting customised models using the `DI` function
 
 There are two ways to fit customised models using `DI`; the first is by using the option `DImodel = ` in the `DI` function and adding the argument `extra_formula = ` to it, and the second is to use the `custom_formula` argument in the `DI` function. If species interaction variables (e.g., the FG interactions or the average pairwise interaction) are included in either `extra_formula` or `custom_formula`, they must first be created and included in the dataset. The function `DI_data` can be used to compute several types of species interaction variables. 
@@ -208,6 +250,83 @@ m3 <- DI(y = "response",
          custom_formula = response ~ 0 + p1 + p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9 +
            treatmentA + bfg_FG1_FG2 + bfg_FG1_FG3 + bfg_FG2_FG3, data = sim3a)
 summary(m3)
+```
+
+## Making predictions and testing contrasts for DI models
+### Predictions using a DI model
+
+We can make predictions from a DI model just like any other regression model using the `predict` function. The user does not need to worry about adding any interaction terms or adjusting any columns if theta is not equal to 1. Only the species proportions along with any additional experimental structures is needed and all other terms in the model will be calculated for the user.  
+```{r, echo = TRUE}
+# Fit model
+m3 <- DI(y = "response", prop = 4:12, 
+         treat = "treatment", DImodel = "AV", 
+         extra_formula = ~ (AV) : treatment, data = sim3a)
+
+predict_data <- sim3[c(1, 79, 352), 3:12]
+# Only species proportions and treatment is needed
+print(predict_data)
+# Make prediction
+predict(m3, newdata = predict_data)
+```
+
+### Uncertainity around predictions
+```{r}
+# The interval and level parameters can be used to calculate the 
+# uncertainty around the predictions
+
+# Get confidence interval around prediction
+predict(m3, newdata = predict_data, interval = "confidence")
+
+# Get prediction interval around prediction
+predict(m3, newdata = predict_data, interval = "prediction")
+
+# The function returns a 95% interval by default, 
+# this can be changed using the level argument
+predict(m3, newdata = predict_data, 
+        interval = "prediction", level = 0.9)
+```
+
+### Contrasts for DI models
+The `contrasts_DI` function can be used to compare and formally test for a difference in performance of communities within the same as well as across different experimental structures
+
+Comparing the performance of the monocultures of different species at treatment A
+```{r, echo = TRUE}
+contr <- list("p1vsp2" = c(1, -1, 0, 0,  0,  0, 0, 0,  0, 0, 0, 0),
+              "p3vsp5" = c(0,  0, 1, 0, -1,  0, 0, 0,  0, 0, 0, 0),
+              "p4vsp6" = c(0,  0, 0, 1,  0, -1, 0, 0,  0, 0, 0, 0),
+              "p7vsp9" = c(0,  0, 0, 0,  0,  0, 1, 0, -1, 0, 0, 0))
+the_C <- contrasts_DI(m3, contrast = contr)
+summary(the_C)
+```
+
+Comparing across the two treatment levels for monoculture of species 1
+```{r, echo = TRUE}
+contr <- list("treatAvsB" = c(1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0))
+the_C <- contrasts_DI(m3, contrast = contr)
+summary(the_C)
+```
+
+Comparing between two species mixtures
+```{r, echo = TRUE}
+mixA <- c(0.25, 0,      0.25, 0,      0.25, 0,      0.25, 0, 0, 0, 0, 0)
+mixB <- c(0,    0.3333, 0,    0.3333, 0,    0.3333, 0,    0, 0, 0, 0, 0)
+
+# We have the proportions of the individual species in the mixtures, however
+# we still need to calculate the interaction effect for these communities
+contr_data <- data.frame(rbind(mixA, mixB))
+colnames(contr_data) <- names(coef(m3))
+
+# Adding the interaction effect of the two mixtures
+contr_data$AV <- DI_data_E_AV(prop = 1:9, data = contr_data)$AV
+print(contr_data)
+
+# We can now subtract the respective values in each column of the two 
+# mixtures and get our contrast
+my_contrast <- as.matrix(contr_data[1, ] - contr_data[2, ])
+rownames(my_contrast) <- "mixAvsB"
+
+the_C <- contrasts_DI(m3, contrast = my_contrast)
+summary(the_C)
 ```
 
 

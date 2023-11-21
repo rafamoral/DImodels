@@ -12,16 +12,20 @@ test_that("predict function works", {
   expect_equal(predict(mod), mod$fitted.values)
   
   # If newdata is specified
+  exp_pred <- c(13.2703349718639, 13.3043419781524, 17.4404149400718, 15.3497141686398)
+  names(exp_pred) <- as.character(1:4)
   expect_equal(predict(mod, newdata = Switzerland[1:4, ]),
-               c(13.2703349718639, 13.3043419781524, 17.4404149400718, 15.3497141686398))
+               exp_pred)
   
   # Ensure SE is accurate
+  exp_se <- c(0.453997370504706, 0.453997370504706, 0.453997370504706, 0.453997370504706)
+  names(exp_se) <- as.character(1:4)
   expect_equal(predict(mod, newdata = Switzerland[1:4, ], se.fit = TRUE)$se.fit,
-               c(0.457828639867846, 0.457828639867846, 0.457828639867846, 0.457828639867846))
+               exp_se)
   
   # If only one row is specified
   expect_equal(suppressWarnings(predict(mod, newdata = Switzerland[4, ])),
-               c(15.3497141686398))
+               c("4" = 15.3497141686398))
   
   # If not all factor variables present in model are present in newdata warning will be thrown
   expect_warning(predict(mod, newdata = Switzerland[1:4, -c(2)]),
@@ -60,11 +64,13 @@ test_that("predict function works", {
                   DImodel = "FULL",
                   data = Switzerland)
   expect_equal(predict(mod_basic, newdata = Switzerland[1:4, ]),
-               c(12.8725915311115, 12.8424977926434, 17.0259686206005, 14.5222165084828))
+               c("1" = 12.8725915311115, "2" = 12.8424977926434, 
+                 "3" = 17.0259686206005, "4" = 14.5222165084828))
   
   # Predict using type = "response"
   expect_equal(predict(mod_basic, newdata = Switzerland[1:4, ], type = "response"),
-               c(12.8725915311115, 12.8424977926434, 17.0259686206005, 14.5222165084828))
+               c("1" = 12.8725915311115, "2" = 12.8424977926434, 
+                 "3" = 17.0259686206005, "4" = 14.5222165084828))
   
   # Predict for when additional treatment is numeric
   swiss_num_treat <- Switzerland
@@ -155,7 +161,146 @@ test_that("Prediction works for all interaction structures", {
                ignore_attr = TRUE)
 })
 
+test_that("Prediction works with grouped ID effects", {
+  # Ensuring predictions work for all interaction structures
+  data("Switzerland")
+  swiss_num_treat <- Switzerland
+  swiss_num_treat$nitrogen <- as.numeric(swiss_num_treat$nitrogen)
+  
+  # E model
+  mod_int <- DI(y = "yield", prop = 4:7, treat = "nitrogen",
+                density = "density", DImodel = "E",
+                ID = c("I1","I1", "I1", "I1"),
+                theta = 0.5,
+                extra_formula = ~ p1:nitrogen, 
+                data = swiss_num_treat)
+  
+  # If not all factor variables present in model are present in newdata warning will be thrown
+  expect_equal(predict(mod_int, newdata = swiss_num_treat[1:3, ]),
+               c(13.5089908, 15.7958394, 15.7958394),
+               ignore_attr = TRUE)
+  
+  # AV model
+  mod_int <- DI(y = "yield", prop = 4:7, treat = "nitrogen",
+                density = "density", DImodel = "AV",
+                ID = c("I1","I2", "I2", "I1"),
+                estimate_theta = TRUE,
+                extra_formula = ~ p1:nitrogen, 
+                data = swiss_num_treat)
+  
+  # If not all factor variables present in model are present in newdata warning will be thrown
+  expect_equal(predict(mod_int, newdata = swiss_num_treat[1:4, ]),
+               c(13.2287655, 15.5557315, 15.5557315, 15.4019903),
+               ignore_attr = TRUE)
+  
+  # ADD model
+  mod_int <- DI(y = "yield", prop = 4:7, treat = "nitrogen",
+                density = "density", DImodel = "ADD",
+                ID = c("I1","I2", "I3", "I4"),
+                estimate_theta = TRUE,
+                extra_formula = ~ I1:nitrogen, 
+                data = swiss_num_treat)
+  
+  # If not all factor variables present in model are present in newdata warning will be thrown
+  expect_equal(predict(mod_int, newdata = swiss_num_treat[1:4, ]),
+               c(13.485657, 13.449836, 17.641787, 15.021399),
+               ignore_attr = TRUE)
+  
+  # FG model
+  mod_int <- DI(y = "yield", prop = 4:7, treat = "nitrogen",
+                density = "density", DImodel = "FG",
+                FG = c("G", "G", "H", "H"),
+                ID = c("I1","I1", "I2", "I2"),
+                estimate_theta = TRUE,
+                extra_formula = ~ p1:nitrogen, 
+                data = Switzerland)
+  
+  # If not all factor variables present in model are present in newdata warning will be thrown
+  expect_equal(predict(mod_int, newdata = Switzerland[1:6, ]),
+               c(13.5117704, 13.5316355, 16.3710272, 16.3710272, 16.7358524, 14.2027248),
+               ignore_attr = TRUE)
+  
+  # FULL model
+  mod_int <- DI(y = "yield", prop = 4:7, treat = "nitrogen",
+                density = "density", DImodel = "FULL",
+                ID = c("I3","I3", "I3", "I3"),
+                estimate_theta = TRUE,
+                extra_formula = ~ p1:nitrogen, 
+                data = swiss_num_treat)
+  
+  # If not all factor variables present in model are present in newdata warning will be thrown
+  expect_equal(predict(mod_int, newdata = swiss_num_treat[1:4, ]),
+               c(13.5538097, 14.3899227, 17.4391819, 15.1266995),
+               ignore_attr = TRUE)
+  
+  # ID model
+  mod_int <- DI(y = "yield", prop = 4:7, treat = "nitrogen",
+                density = "density", DImodel = "ID",
+                ID = c("I3","I3", "I3", "I3"),
+                estimate_theta = TRUE, extra_formula = ~ p1:nitrogen, 
+                data = swiss_num_treat)
+  
+  # If not all factor variables present in model are present in newdata warning will be thrown
+  expect_equal(predict(mod_int, newdata = swiss_num_treat[1, ]),
+               c(12.3940615),
+               ignore_attr = TRUE)
+})
 
+# Testing CI and PI work
+
+test_that("contrasts function works", {
+  data("sim2")
+  
+  mod <- DI(y = "response", DImodel = "FULL",
+            data = sim2, prop = 3:6)
+  mod_lm <- lm(response ~ 0 + (p1 + p2 + p3 + p4)^2, data = sim2)
+  
+  # Base prediction in same
+  expect_equal(predict(mod), predict(mod_lm))
+  
+  # CI is same
+  expect_equal(predict(mod, interval = "conf"),
+               predict(mod_lm, interval = "conf"))
+  
+  # PI is same
+  expect_equal(predict(mod, interval = "pred", level = 0.9),
+               suppressWarnings(predict(mod_lm, interval = "pred", level = 0.9)))
+  
+  
+  # PI with se is same
+  DI_pred <- predict(mod, interval = "pred", se.fit = TRUE)
+  lm_pred <- suppressWarnings(predict(mod_lm, interval = "pred", se.fit = TRUE))
+  expect_equal(as.numeric(DI_pred$se.fit), lm_pred$se.fit)
+  expect_equal(DI_pred$fit, lm_pred$fit)
+  
+  # CI and PI with newdata work
+  DI_pred <- predict(mod, newdata = sim2[1:5, ], interval = "conf", se.fit = TRUE)
+  lm_pred <- suppressWarnings(predict(mod_lm, newdata = sim2[1:5, ], interval = "conf", se.fit = TRUE))
+  expect_equal(as.numeric(DI_pred$se.fit), as.numeric(lm_pred$se.fit))
+  expect_equal(DI_pred$fit, lm_pred$fit)
+  
+  DI_pred <- predict(mod, newdata = sim2[1:5, ], interval = "pred", se.fit = TRUE)
+  lm_pred <- suppressWarnings(predict(mod_lm, newdata = sim2[1:5, ], interval = "pred", se.fit = TRUE))
+  expect_equal(as.numeric(DI_pred$se.fit), as.numeric(lm_pred$se.fit))
+  expect_equal(DI_pred$fit, lm_pred$fit)
+  
+  DI_pred <- predict(mod, newdata = sim2[1:5, ], interval = "none", se.fit = TRUE)
+  lm_pred <- suppressWarnings(predict(mod_lm, newdata = sim2[1:5, ], interval = "none", se.fit = TRUE))
+  expect_equal(as.numeric(DI_pred$se.fit), as.numeric(lm_pred$se.fit))
+  expect_equal(DI_pred$fit, lm_pred$fit)
+  
+  # Ensure response type = "terms" works
+  expect_equal(as.vector(predict(mod_lm, type = "terms")),
+               as.vector(predict(mod, type = "terms")))
+  
+  DI_pred <- predict(mod, type = "terms", se.fit = TRUE)
+  lm_pred <- predict(mod_lm, type = "terms", se.fit = TRUE)
+  expect_equal(as.vector(DI_pred$fit), as.vector(lm_pred$fit))
+  expect_equal(as.vector(DI_pred$se.fit), as.vector(lm_pred$se.fit))
+
+})
+
+# Testing contrast function
 test_that("contrasts function works", {
   data("Switzerland")
   
@@ -171,11 +316,11 @@ test_that("contrasts function works", {
   
   # Mandatory to specify either constrast_vars or contrast
   expect_error(contrasts_DI(mod), 
-               regexp = "Provide either one of contrast_vars or constrast")
+               regexp = "Provide either one of `contrast_vars` or `constrast`")
   
   # Can't specify both contrast_vars and contrast
-  expect_error(contrasts_DI(mod, contrast_vars = 0, contrast = 0),
-               regexp = "Provide only one of contrast_vars or constrast")
+  expect_warning(contrasts_DI(mod, contrast_vars = 0, contrast = rep(0, 8)),
+                 regexp = "Provide only one of `contrast_vars` or `constrast`")
   
   # Ensure contrast vector is of appropriate type
   expect_error(contrasts_DI(mod, contrast = c("1", "-1", "0", "0")),
@@ -195,7 +340,7 @@ test_that("contrasts function works", {
   
   # Ensure contrast_vars are specified as a list
   expect_error(contrasts_DI(mod, contrast_vars = c("density" = c(-0.25, 0.25, 0.25, -0.25))),
-               regexp = "Contrast variables should be specified as a nested list")
+               regexp = "Contrast variables should be specified as a nested named list")
   
   # Ensure user specifies variables present in model in contrast_vars
   expect_error(contrasts_DI(mod, contrast_vars = list(p5 = c(0, 1))),
@@ -227,9 +372,9 @@ test_that("contrasts function works", {
                ignore_attr = TRUE)
   
   # Using contrast_vars
-  the_C <- matrix(c(1, 0, 0, 0, 0, 0, 0, 0), nrow = 1)
+  the_C <- matrix(c(0, 0, 0, 0, 0, 1, 0, 0), nrow = 1)
   colnames(the_C) <- names(mod$coefficients[1:8])
-  expect_equal(contrasts_DI(mod, contrast_vars = list("p1" = c(1))),
+  expect_equal(contrasts_DI(mod, contrast_vars = list("nitrogen" = list("50v150"  = c(1, -1)))),
                multcomp::glht(mod, linfct = the_C , 
                               coef = mod$coef[1:8], vcov = vcov(mod)),
                ignore_attr = TRUE)

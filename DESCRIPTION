@@ -1,7 +1,7 @@
 Package: DImodels
 Type: Package
 Title: Diversity-Interactions (DI) Models
-Version: 1.2.1
+Version: 1.3
 Date: 2023-05-20
 Authors@R: c(person("Rafael", "de Andrade Moral", role = c("aut", "cre"), email = "rafael.deandrademoral@mu.ie"), person("John", "Connolly", role = "aut"), person("Rishabh", "Vishwakarma", role = "ctb"), person("Caroline", "Brophy", role = "aut"))
 Author: Rafael de Andrade Moral [aut, cre], John Connolly [aut], Rishabh Vishwakarma [ctb], Caroline Brophy [aut]
@@ -20,3 +20,4 @@ Description: The 'DImodels' package is suitable for analysing data from biodiver
 License: GPL (>=2)
 NeedsCompilation: no
 Config/testthat/edition: 3
+RoxygenNote: 7.2.3
