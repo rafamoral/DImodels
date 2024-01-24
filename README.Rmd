@@ -26,6 +26,12 @@ knitr::opts_chunk$set(
 The `DImodels` package is designed to make fitting Diversity-Interactions models easier. Diversity-Interactions (DI) models (Kirwan et al 2009) are a set of tools for analysing and interpreting data from experiments that explore the effects of species diversity (from a pool of *S* species) on community-level responses. Data suitable for DI models will include (at least) for each experimental unit: a response recorded at a point in time, and a set of proportions of *S* species  $p_1$, $p_2$, ..., $p_S$ from a point in time prior to the recording of the response. The proportions sum to 1 for each experimental unit.   
 
 
+__Main changes in the package from version 1.3 to version 1.3.1__
+
+- A `fortify` function method has been added to supplement the data fitted to a linear model with model fit statistics.
+- A `describe_model` function is added which can be used to get a short text summary of any DI model.
+- Meta-data about a DI model can be accessed via the `attributes` function. 
+
 __Main changes in the package from version 1.2 to version 1.3__
 
 - The `DI` and `autoDI` functions now have an additional parameter called `ID` which enables the user to group the species identity effects (see examples below).

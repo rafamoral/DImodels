@@ -11,6 +11,10 @@ DI <- function(y, prop, DImodel, custom_formula, data,
   
   # ensuring model tag is a string
   if(!missing(DImodel)) {
+    if(!DImodel %in% c("STR", "ID", "AV", "E", "FG", "ADD", "FULL")){
+      stop(paste0("`DImodel` should be one of ", dQuote("STR"),", ", dQuote("ID"), ", ", dQuote("AV"), ", ",
+                  dQuote("E"), ", ", dQuote("FG"), ", ", dQuote("ADD"), ", ", "or ", dQuote("FULL")))
+    }
     find_input <- try(DImodel, silent = TRUE)
     if(inherits(find_input, "try-error")) {
       DImodel <- paste0(substitute(DImodel))
@@ -41,21 +45,22 @@ DI <- function(y, prop, DImodel, custom_formula, data,
   family <- "gaussian"
   total <- NULL
   # family lock
-  if(!(family %in% c("gaussian","normal")))
-    stop("As of version ", packageVersion("DImodels"),
-         " DI models are implemented for family = 'gaussian' (= 'normal') only")
+  # if(!(family %in% c("gaussian","normal")))
+  #   stop("As of version ", packageVersion("DImodels"),
+  #        " DI models are implemented for family = 'gaussian' (= 'normal') only")
   # if model is not specified => it is a CUSTOM model
   if(missing(DImodel)) DImodel <- "CUSTOM"
   # default family set as normal
   if(missing(family) || family == "normal") family <- "gaussian"
+  # Commented for now as not used
   # checks for binomial
-  if(family %in% c("binomial","quasibinomial")) {
-    if(missing(total)) {
-      if(any(!(data[,y] %in% c(0,1)))) {
-        stop("total must be informed for non-binary discrete proportion data")
-      } else total <- 1
-    } else total <- data[,total]
-  } else total <- NULL
+  # if(family %in% c("binomial","quasibinomial")) {
+  #   if(missing(total)) {
+  #     if(any(!(data[,y] %in% c(0,1)))) {
+  #       stop("total must be informed for non-binary discrete proportion data")
+  #     } else total <- 1
+  #   } else total <- data[,total]
+  # } else total <- NULL
   
   # checks for extra_formula
   if(!missing(extra_formula) & !missing(custom_formula)) {
@@ -75,7 +80,8 @@ DI <- function(y, prop, DImodel, custom_formula, data,
   }
   if(treat_flag & length(grep("treat", DImodel)) == 1)
     stop("you must supply the treat argument to fit model ", DImodel)
-  
+  # ID is null if missing
+  if(missing(ID)) ID <- NULL
   # save FG names
   if(!missing(FG)) FGnames <- FG
   # NULL flag for FG variable
@@ -113,9 +119,9 @@ DI <- function(y, prop, DImodel, custom_formula, data,
     data_obj <- DI_data_prepare(y = y, block = block, density = density, prop = prop, treat = treat, ID = ID, FG = FG, data = data, theta = theta)
     newdata <- data_obj$newdata
     nSpecies <- data_obj$nSpecies
-    if(data_obj$P_int_flag & DImodel == "ADD") {
-      stop("you must have > 3 species to fit model ", DImodel, " (", namesub_DI(DImodel), ")")
-    }
+    # if(data_obj$P_int_flag & DImodel == "ADD") {
+    #   stop("you must have > 3 species to fit model ", DImodel, " (", namesub_DI(DImodel), ")")
+    # }
     ## fitting the DI model
   
     ## adding the DI_ prefix
@@ -134,6 +140,7 @@ DI <- function(y, prop, DImodel, custom_formula, data,
                              ID = data_obj$ID, treat = data_obj$treat, data = newdata, family = family, extra_formula = extra_formula,
                              estimate_theta = estimate_theta, nSpecies = nSpecies, total = total)
     }
+    
   }
   if(!estimate_theta) {
     the_DI_model <- model_fit$model
@@ -152,6 +159,14 @@ DI <- function(y, prop, DImodel, custom_formula, data,
   }
   # RV change: Adding original data to model object
   the_DI_model$original_data <- data
+  # Add attributes to help with post-processing of model
+  attr(the_DI_model, "DImodel") <- DImodel
+  attr(the_DI_model, "y") <- if(DImodel == "CUSTOM") NULL else data_obj$y
+  attr(the_DI_model, "prop") <- if(DImodel == "CUSTOM") NULL else data_obj$prop
+  attr(the_DI_model, "FG") <- if(DImodel == "CUSTOM") NULL else FG
+  attr(the_DI_model, "ID") <- if(DImodel == "CUSTOM") NULL else data_obj$ID_map
+  attr(the_DI_model, "theta_flag") <- if(DImodel == "CUSTOM") NULL else estimate_theta
+  attr(the_DI_model, "theta_val") <- if(DImodel == "CUSTOM") NULL else the_DI_model$coef["theta"]
   #the_DI_model$aic <- AIC2(the_DI_model)
   class(the_DI_model) <- c("DI", "glm", "lm")
   return(the_DI_model)
@@ -794,6 +809,34 @@ DI_FULL_treat <- function(y, block, density, prop, treat, FG, ID, data, family, 
     modlist$theta$DIcheck_formula <- fmla_FULL_treat
   }
   return(modlist)
+}
+
+describe_model <- function(model){
+  if(!inherits(model, "DI")){
+    stop("`model` should be regression object of class <DI> fit using the `DI()` or `autoDI()` functions.")
+  }
+  
+  DImodel <- attr(model, "DImodel")
+  
+  if(DImodel == "CUSTOM"){
+     description <- c("This is a custom DI model.")
+  } else if(DImodel == "STR"){
+    model$model
+    description <- paste0("This model doesn't have any species identity or interaction effects and only consists of experimental structures.")
+  } else {
+    choices <- c("ID" = " there being no interaction terms in the model.",
+                 "AV" = " the Average interaction structure.",
+                 "E" = " the Evenness interaction structure.",
+                 "FG" = paste0(" the Functional group interaction structure with FG values of (", paste0(attr(model, "FG"), collapse = ", "), ")."),
+                 "ADD" = " the Additive species interaction structure.",
+                 "FULL" = " the Full pairwise interaction structure.")
+    int_str <- choices[names(choices) == DImodel]
+    ID_text <- if (all(paste0(attr(model, "prop"), "_ID") == (attr(model, "ID")))) "" else paste0("The species identity effects are grouped as (", paste0(attr(model, "ID"), collapse = ", "),").")
+    theta_text <- if(!is.na(attr(model, "theta_val"))) paste0(" The interaction terms have an associated theta (exponent on the interactions) value of '", round(attr(model, "theta_val"), 2), "'.") else ""
+    description <- paste0("This model has ", length(attr(model, "prop")), " species with", int_str, theta_text,
+                          ID_text)
+  }
+  return(description)
 }
 
 #################################

@@ -141,15 +141,15 @@ Kirwan L, J Connolly, JA Finn, C Brophy, A \enc{Lüscher}{}, D Nyfeler and MT Se
 
 ## Fit the functional group model using DI and the FG tag
   m1 <- DI(y = "response", prop = 3:8, treat = "treatment", 
-           FG = c("FG1","FG1","FG2","FG2","FG3","FG3"), DImodel = FG, data = sim4)
+           FG = c("FG1","FG1","FG2","FG2","FG3","FG3"), DImodel = "FG", data = sim4)
   summary(m1)
 
 ## Fit the additive species model using DI and the ADD tag
-  m2 <- DI(y = "response", prop = 3:8, treat = "treatment", DImodel = ADD, data = sim4)
+  m2 <- DI(y = "response", prop = 3:8, treat = "treatment", DImodel = "ADD", data = sim4)
   summary(m2)
 
 ## Fit the full pairwise model using DI and the FULL tag
-  m3 <- DI(y = "response", prop = 3:8, treat = "treatment", DImodel = FULL, data = sim4)
+  m3 <- DI(y = "response", prop = 3:8, treat = "treatment", DImodel = "FULL", data = sim4)
   summary(m3)
   plot(m3)
   

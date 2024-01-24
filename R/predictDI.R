@@ -136,9 +136,9 @@ predict.DI <- function (object, newdata, se.fit = FALSE,
         
         if (is.numeric(original_data[, covariate])){
           if ( !(covariate %in% colnames(updated_newdata))){
-            warning(paste0(names(structures[structures == covariate]), ' not supplied in newdata. Calculating for \'', covariate,
-                           '\' = ' , 0))
-            updated_newdata[, covariate] <- 0
+            warning(paste0(names(structures[structures == covariate]), ' not supplied in newdata. Calculating the prediction for the median value of (', median(original_data[, covariate]),') of \'', covariate,
+                           '\' from the training data.'))
+            updated_newdata[, covariate] <- median(original_data[, covariate])
           }
         } else {
           # Levels of factor covariate in original data
@@ -152,7 +152,7 @@ predict.DI <- function (object, newdata, se.fit = FALSE,
           
           # If levels of covariate in newdata not matching ones in original data, stop prediction
           if (! (all(unique(updated_newdata[, covariate]) %in% covariate_levels, na.rm = TRUE))){
-            stop(paste0('Values for ', covariate,' given were not present in raw data used for fitting. Predictions can\'t be made for these values.'))
+            stop(paste0('Values for ', covariate,' given were not present in training data used for fitting. Predictions can\'t be made for these values.'))
           }
           
           # If covariate is supplied as character or numeric, converting to factor
@@ -169,8 +169,38 @@ predict.DI <- function (object, newdata, se.fit = FALSE,
     extra_formula <- eval(object$DIcall$extra_formula)
     
     if (! is.null(extra_formula)){
+      # If any column from extra_formula is missing in updated_newdata
+      e <- try(model.frame(terms(extra_formula), updated_newdata), silent = TRUE)
+      if(inherits(e, "try-error")){
+        extra_vars <- model.frame(terms(extra_formula), original_data)
+        for (covariate in colnames(extra_vars)){
+          if(!covariate %in% colnames(updated_newdata)){
+            if(is.numeric(extra_vars[, covariate])){
+              warning(paste0(names(extra_vars[, covariate]), ' not supplied in newdata. Calculating the prediction for the median value (', median(extra_vars[, covariate]),') of \'', covariate,
+                             '\' from the training data.'))
+              updated_newdata[, covariate] <- median(extra_vars[, covariate])
+            } else {
+              # Levels of factor covariate in original data
+              covariate_levels <- as.factor(unique(extra_vars[, covariate]))
+              # If covariate isn't present in newdata, estimating for base level
+              if ( !(covariate %in% colnames(updated_newdata))){
+                warning(paste0(names(structures[structures == covariate]), ' not supplied in newdata. Calculating for \'', covariate,
+                               '\' = ' , levels(covariate_levels)[1]))
+                updated_newdata[, covariate] <- levels(covariate_levels)[1]
+              }
+              
+              # If covariate is supplied as character or numeric, converting to factor
+              if (!is.factor(updated_newdata[, covariate])){
+                updated_newdata[, covariate] <- factor(updated_newdata[, covariate],
+                                                       levels = levels(covariate_levels))
+              }
+            }
+          }
+        }
+      }
       
       extra_data <- model.frame(terms(extra_formula), updated_newdata)
+      
       
       # Matching factors in extra_formula to ones in original_data
       og_factors <- original_data[, sapply(original_data, function(x){is.factor(x) | is.character(x)})]
@@ -284,14 +314,29 @@ predict.DI <- function (object, newdata, se.fit = FALSE,
     #   ret_obj <- y_hat
     # }
     
+    # FG model was failing to give predictions this fixes it
+    if(DImodel_tag == "FG" && is.null(extra_formula)){
+      if(only_one_row){
+        X_new <- rbind(X_new, X_new)
+        X_new$FG_ <- extra_variables
+        X_new <- X_new[1, ]
+      } else {
+        X_new$FG_ <- extra_variables  
+      }
+    }
+    
+    # Prediction gets messy if we have extra_formula 
+    # So manaully making prediction using predict.lm
     if (! is.null(extra_formula)){
       # Terms <- delete.response(terms(glm_fit))
+      # predict.lm because this is what is called by predict.glm internally
       ret_obj <- suppressWarnings(predict.lm(glm_fit, newdata = updated_newdata,
                                              se.fit = ifelse(interval != "none", TRUE, se.fit), 
                                              type = ifelse(type == "link", "response", type), ...))
     } else {
       # Terms <- delete.response(terms(formula(fmla)))
-      ret_obj <- suppressWarnings(predict.glm(object, newdata = X_new, 
+      
+      ret_obj <- suppressWarnings(predict.glm(object, newdata = if(DImodel_tag == "STR") updated_newdata else X_new, 
                                               se.fit = ifelse(interval != "none", TRUE, se.fit),
                                               type = type, ...))
     }
@@ -328,6 +373,11 @@ predict.DI <- function (object, newdata, se.fit = FALSE,
     }
   }
   
+  # Sometimes the prediction could be rank-deficient and lm adds this attribute
+  # which could be scary. So drop it
+  if(!is.null(attr(ret_obj, "non-estim"))){
+    attr(ret_obj, "non-estim") <- NULL
+  }
   return(ret_obj)
 }
 
@@ -445,4 +495,22 @@ contrasts_DI <- function(object, contrast, contrast_vars, ...){
 
 is_near <- function (x, y, tol = .Machine$double.eps^0.5) {
   abs(x - y) < tol
+}
+
+# Fortify method for model diagnostics
+fortify.DI <- function(model, data = model$model, ...){
+  # Add proportions to data
+  prop_idx <- eval(model$DIcall$prop)
+  prop <- model$data[, prop_idx]
+  data <- cbind(data, prop)
+    
+  # Add other statistics
+  infl <- stats::influence(model, do.coef = FALSE)
+  data$.hat <- infl$hat
+  data$.sigma <- infl$sigma
+  data$.cooksd <- stats::cooks.distance(model, infl)
+  data$.fitted <- stats::predict(model)
+  data$.resid <- stats::resid(model)
+  data$.stdresid <- stats::rstandard(model, infl)
+  return(data)
 }
