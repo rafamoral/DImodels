@@ -1,14 +1,13 @@
 Package: DImodels
 Type: Package
 Title: Diversity-Interactions (DI) Models
-Version: 1.3
-Date: 2023-05-20
+Version: 1.3.1
+Date: 2023-11-22
 Authors@R: c(person("Rafael", "de Andrade Moral", role = c("aut", "cre"), email = "rafael.deandrademoral@mu.ie"), person("John", "Connolly", role = "aut"), person("Rishabh", "Vishwakarma", role = "ctb"), person("Caroline", "Brophy", role = "aut"))
 Author: Rafael de Andrade Moral [aut, cre], John Connolly [aut], Rishabh Vishwakarma [ctb], Caroline Brophy [aut]
 Maintainer: Rafael de Andrade Moral <rafael.deandrademoral@mu.ie>
-Imports: methods, graphics, stats, utils, hnp, rootSolve, multcomp
+Imports: methods, graphics, stats, utils, ggplot2, hnp, rootSolve, multcomp
 Suggests: 
-    ggplot2,
     knitr,
     rmarkdown,
     markdown,

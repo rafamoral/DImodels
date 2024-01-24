@@ -4,9 +4,11 @@ import(stats)
 import(utils)
 import(hnp)
 import(rootSolve)
+importFrom(ggplot2, "fortify")
 
 
 export(autoDI)
+export(describe_model)
 export(DI_data, DI_data_prepare, DI_data_E_AV, DI_data_ADD, DI_data_FG, DI_data_fullpairwise)
 export(DI)
 export(theta_CI)
@@ -17,6 +19,7 @@ export(contrasts_DI)
 export(richness_vs_DI)
 
 S3method(predict, DI)
+S3method(fortify, DI)
 
 S3method(extract, DI)
 S3method(extract, autoDI)

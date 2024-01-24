@@ -84,7 +84,7 @@ test_that("predict function works", {
   
   # If not numeric variables present in model are present in newdata warning will be thrown
   expect_warning(predict(mod_num, newdata = swiss_num_treat[1:4, -c(2)]),
-                 regexp = "not supplied in newdata. Calculating for")
+                 regexp = "not supplied in newdata. Calculating the prediction")
 })
 
 test_that("Prediction works for all interaction structures", {
@@ -246,6 +246,28 @@ test_that("Prediction works with grouped ID effects", {
                ignore_attr = TRUE)
 })
 
+# Test that predict function works with extra_formula and m
+# missing variables
+test_that("Prediction works with grouped ID effects", {
+  # Ensuring predictions work for all interaction structures
+  data("Switzerland")
+  mod_FG <- DI(y = "yield", DImodel = "FG", FG = c("G", "G", "H", "H"),
+               data = Switzerland, prop = 4:7,
+               extra_formula = ~nitrogen*density)
+  expect_equal(suppressWarnings(predict(mod_FG, newdata = Switzerland[1, 4:7])),
+               c(11.939679),
+               ignore_attr = TRUE)
+  
+  swiss_num_treat <- Switzerland
+  swiss_num_treat$nitrogen <- as.numeric(swiss_num_treat$nitrogen)
+  mod_FG <- DI(y = "yield", DImodel = "FG", FG = c("G", "G", "H", "H"),
+               data = swiss_num_treat, prop = 4:7,
+               extra_formula = ~nitrogen*density)
+  expect_equal(suppressWarnings(predict(mod_FG, newdata = swiss_num_treat[1:2, 4:7])),
+               c(13.036867, 13.070874),
+               ignore_attr = TRUE)
+})
+  
 # Testing CI and PI work
 
 test_that("contrasts function works", {
@@ -379,4 +401,16 @@ test_that("contrasts function works", {
                               coef = mod$coef[1:8], vcov = vcov(mod)),
                ignore_attr = TRUE)
   
+})
+
+# test fortify
+# Test describe_model
+test_that("fortify.DI works", {
+  data(sim2)
+  ## Fit model
+  mod_FG <- DI(y = "response", FG = c("G", "G", "L", "L"), 
+               prop = 3:6, data = sim2, DImodel = "FG")
+  ## Describe model
+  expect_equal(fortify(mod_FG),
+               cbind(ggplot2:::fortify.lm(mod_FG), sim2[, 3:6])[, c(1:6, 13:16, 7:12)])
 })

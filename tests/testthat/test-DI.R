@@ -274,6 +274,10 @@ test_that("DI fails with appropriate message", {
   # To suppress rounding error warning
   sim0$p3 <- 1- sim0$p1 - sim0$p2
   
+  # DImodel should be proper
+  expect_error(DI(prop = 3:5, data = sim0, DImodel = "AV1"),
+               regexp = "should be one of")
+  
   # y can't be missing
   expect_error(DI(prop = 3:5, data = sim0),
                regexp = "You must supply a response variable name or column index through the argument 'y'")
@@ -315,7 +319,7 @@ test_that("DI fails with appropriate message", {
   
   ## Warnings
   # Don't specify theta and estimate_theta, estimate_theta takes precedence 
-  expect_warning(DI(y = "yield", prop = 4:7, DImodel = AV,
+  expect_warning(DI(y = "yield", prop = 4:7, DImodel = "AV",
                   data = Switzerland, theta = 0.5, estimate_theta = TRUE),
                 regexp = "By specifying estimate_theta as TRUE, DI is overriding the specified theta value")
   
@@ -367,3 +371,40 @@ test_that("Interior functions in DI_internal work", {
                c(NA, 37.8141225527972, 11.5427716510587))
 })
 
+# Test describe_model
+test_that("describe_model works", {
+  data(sim2)
+  ## Fit model
+  mod_FG <- DI(y = "response", FG = c("G", "G", "L", "L"), 
+               prop = 3:6, data = sim2, DImodel = "FG")
+  ## Describe model
+  expect_equal(describe_model(mod_FG),
+               "This model has 4 species with the Functional group interaction structure with FG values of (G, G, L, L).")
+  
+  
+  mod_FULL <- DI(y = "response", estimate_theta = TRUE, 
+                 prop = 3:6, data = sim2, DImodel = "FULL")
+  expect_equal(describe_model(mod_FULL),
+               "This model has 4 species with the Full pairwise interaction structure. The interaction terms have an associated theta (exponent on the interactions) value of '0.45'.")
+  
+  mod_AV <- DI(y = "response", ID = c("ID1", "ID1", "ID2", "ID2"),
+               estimate_theta = TRUE, 
+               prop = 3:6, data = sim2, DImodel = "AV")
+  expect_equal(describe_model(mod_AV),
+               "This model has 4 species with the Average interaction structure. The interaction terms have an associated theta (exponent on the interactions) value of '0.45'.The species identity effects are grouped as (ID1, ID1, ID2, ID2).")
+  
+  mod_STR <- DI(y = "response", FG = c("G", "G", "L", "L"), 
+               prop = 3:6, data = sim2, DImodel = "STR")
+  ## Describe model
+  expect_equal(describe_model(mod_STR),
+               "This model doesn't have any species identity or interaction effects and only consists of experimental structures.")
+  
+  mod_CUST <- DI(custom_formula = response ~ block, data = sim2)
+  ## Describe model
+  expect_equal(describe_model(mod_CUST),
+               "This is a custom DI model.")
+  
+  # Proper error is thrown
+  expect_error(describe_model(lm(1 ~ 1)),
+               regexp = "`model` should be regression object of class <DI>")
+})

@@ -1,4 +1,4 @@
-DI_data_prepare <- function(y, block, density, prop, treat, ID, FG = NULL, data, theta = 1) {
+DI_data_prepare <- function(y, block, density, prop, treat, ID = NULL, FG = NULL, data, theta = 1) {
   if(any(is.na(data))) {
     stop("The dataset contains missing values. Please remove them prior to analysis.") 
   }
@@ -101,7 +101,7 @@ DI_data_prepare <- function(y, block, density, prop, treat, ID, FG = NULL, data,
   
   ###### RV change########
   # Grouping ID effects
-  if(missing(ID)){
+  if(is.null(ID)){
     ID <- paste0(prop, "_ID")
   } 
   ID_name_check(ID = ID, prop = prop, FG = FG_names)
@@ -111,7 +111,7 @@ DI_data_prepare <- function(y, block, density, prop, treat, ID, FG = NULL, data,
   
   ## return object
   return(list("newdata" = newdata, "y" = y, "block" = block, density = density,
-              "prop" = prop, "ID" = unique(ID), "treat" = treat, "FG" = FG,
+              "prop" = prop, "ID" = unique(ID), ID_map = ID, "treat" = treat, "FG" = FG,
               "P_int_flag" = P_int_flag, "even_flag" = even_flag, "nSpecies" = length(prop)))
 }
 

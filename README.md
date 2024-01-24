@@ -24,6 +24,15 @@ species $p_1$, $p_2$, …, $p_S$ from a point in time prior to the
 recording of the response. The proportions sum to 1 for each
 experimental unit.
 
+**Main changes in the package from version 1.3 to version 1.3.1**
+
+- A `forify` function method has been added to supplement the data
+  fitted to a linear model with model fit statistics.
+- A `describe_model` function is added which can be used to get a short
+  text summary of any DI model.
+- Meta-data about a DI model can be accessed via the `attributes`
+  function.
+
 **Main changes in the package from version 1.2 to version 1.3**
 
 - The `DI` and `autoDI` functions now have an additional parameter
@@ -292,10 +301,6 @@ summary(auto1)
 #> Call:
 #> glm(formula = new_fmla, family = family, data = new_data)
 #> 
-#> Deviance Residuals: 
-#>     Min       1Q   Median       3Q      Max  
-#> -3.8425  -0.8141   0.0509   0.8048   3.5657  
-#> 
 #> Coefficients:
 #>                Estimate Std. Error t value Pr(>|t|)    
 #> p1_ID            9.7497     0.3666  26.595  < 2e-16 ***
@@ -358,10 +363,6 @@ summary(m1)
 #> 
 #> Call:
 #> glm(formula = new_fmla, family = family, data = new_data)
-#> 
-#> Deviance Residuals: 
-#>     Min       1Q   Median       3Q      Max  
-#> -3.8425  -0.8141   0.0509   0.8048   3.5657  
 #> 
 #> Coefficients:
 #>                Estimate Std. Error t value Pr(>|t|)    
@@ -492,10 +493,6 @@ summary(m2)
 #> Call:
 #> glm(formula = new_fmla, family = family, data = new_data)
 #> 
-#> Deviance Residuals: 
-#>     Min       1Q   Median       3Q      Max  
-#> -3.6892  -0.7859   0.0436   0.7781   3.6227  
-#> 
 #> Coefficients:
 #>                  Estimate Std. Error t value Pr(>|t|)    
 #> p1_ID           10.018491   0.466552  21.473  < 2e-16 ***
@@ -556,10 +553,6 @@ summary(m3)
 #> Call:
 #> glm(formula = new_fmla, family = family, data = new_data)
 #> 
-#> Deviance Residuals: 
-#>     Min       1Q   Median       3Q      Max  
-#> -3.8251  -0.8208   0.0554   0.7982   3.4218  
-#> 
 #> Coefficients:
 #>                          Estimate Std. Error t value Pr(>|t|)    
 #> p1_ID                     9.68668    0.40000  24.217  < 2e-16 ***
@@ -617,10 +610,6 @@ summary(m3)
 #> 
 #> Call:
 #> glm(formula = custom_formula, family = family, data = data)
-#> 
-#> Deviance Residuals: 
-#>     Min       1Q   Median       3Q      Max  
-#> -4.0272  -0.7831   0.0404   0.7570   3.7016  
 #> 
 #> Coefficients:
 #>             Estimate Std. Error t value Pr(>|t|)    

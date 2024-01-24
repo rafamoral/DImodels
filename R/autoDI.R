@@ -24,9 +24,9 @@ autoDI <- function(y, prop, data, block, density, treat, ID, FG = NULL,
   family <- "gaussian"
   total <- NULL
   # family lock
-  if(!(family %in% c("gaussian","normal")))
-    stop("As of version ", packageVersion("DImodels"),
-         " DI models are implemented for family = 'gaussian' (= 'normal') only")
+  # if(!(family %in% c("gaussian","normal")))
+  #   stop("As of version ", packageVersion("DImodels"),
+  #        " DI models are implemented for family = 'gaussian' (= 'normal') only")
   
   # set theta flag
   estimate_theta <- TRUE
@@ -35,16 +35,17 @@ autoDI <- function(y, prop, data, block, density, treat, ID, FG = NULL,
   # default family set as normal
   if(missing(family) || family == "normal") family <- "gaussian"
   # checks for binomial
-  if(family %in% c("binomial","quasibinomial")) {
-    if(missing(total)) {
-      if(any(!(data[,y] %in% c(0,1)))) {
-        stop("total must be informed for non-binary discrete proportion data")
-      } else total <- 1
-    } else total <- data[,total]
-  } else total <- NULL
+  # Commented for now since not used 
+  # if(family %in% c("binomial","quasibinomial")) {
+  #   if(missing(total)) {
+  #     if(any(!(data[,y] %in% c(0,1)))) {
+  #       stop("total must be informed for non-binary discrete proportion data")
+  #     } else total <- 1
+  #   } else total <- data[,total]
+  # } else total <- NULL
   # checks for quasi and information criteria
-  if(family %in% c("quasipoisson","quasibinomial") & selection %in% c("AIC","AICc","BIC","BICc"))
-    stop("cannot compute information criteria for quasi models, use selection = 'Ftest'")
+  # if(family %in% c("quasipoisson","quasibinomial") & selection %in% c("AIC","AICc","BIC","BICc"))
+  #   stop("cannot compute information criteria for quasi models, use selection = 'Ftest'")
   # flags if block/density and/or treat are missing
   if(missing(block)) block <- NA
   if(missing(density)) density <- NA
