@@ -19,4 +19,5 @@ Description: The 'DImodels' package is suitable for analysing data from biodiver
 License: GPL (>=2)
 NeedsCompilation: no
 Config/testthat/edition: 3
+URL: https://github.com/rafamoral/DImodels
 RoxygenNote: 7.2.3
