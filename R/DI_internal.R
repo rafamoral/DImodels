@@ -358,23 +358,32 @@ get_community <- function(prop, data) {
   return(community_factor)
 }
 
-DI_reference <- function(model, prop, data) {
+DI_compare <- function(model, ...) {
+  theta_flag <- attr(model, "theta_flag")
+  og_data <- model$original_data
+  prop <- attr(model, "prop")
+  if(theta_flag) { # retrieve theta value
+    theta <- coef(model)["theta"]    # retrieve theta value
+  } else {                           # retrieve theta value
+    theta <- 1                       # retrieve theta value
+  }                                  # retrieve theta value
+  ref_model <- DI_reference(model = model, prop = prop, 
+                            data = og_data, theta = theta) # add theta argument
+  print(anova(model, ref_model, ...))
+  return(invisible(ref_model)) # return ref_model instead of function DI_reference
+}
+
+DI_reference <- function(model, prop, data, theta = 1) { # add theta argument
   community <- get_community(prop = prop, data = data)
   new_data <- data
   new_data$community <- community
-  model$call <- model$DIcall
-  #Take the model input and add community (the factor) to it:
-  ref_model <- update(model, extra_formula = ~ community, data = new_data)
+  # delete line replacing call with DIcall
+  ref_model <- update_DI(model, # use update_DI function, no need to replace call
+                         extra_formula = ~ community,
+                         estimate_theta = FALSE, # turn off theta estimation
+                         theta = theta,          # use estimated value for original model
+                         data = new_data)
   return(ref_model)
-}
-
-DI_compare <- function(model, ...) {
-  the_arguments <- as.list(model$DIcall)
-  ref_model <- DI_reference(model = model,
-                            prop = eval(the_arguments$prop),
-                            data = eval(the_arguments$data))
-  print(anova(model, ref_model, ...))
-  return(invisible(DI_reference))
 }
 
 anova.DI <- function(object, ...) {

@@ -334,12 +334,20 @@ test_that("DI fails with appropriate message", {
 test_that("Interior functions in DI_internal work", {
   data("Switzerland")
   
+  mod_no <- DI(y = "yield", prop = 4:7, treat = "nitrogen", FG = c("G", "G", "H", "H"), 
+            density = "density", DImodel = "FG", data = Switzerland,
+            estimate_theta = FALSE)
+  
+  # DI_reference and DI_compare
+  expect_equal(DI_reference(mod_no, 4:7, Switzerland),
+               DI_compare(mod_no))
+  
   mod <- DI(y = "yield", prop = 4:7, treat = "nitrogen", FG = c("G", "G", "H", "H"), 
             density = "density", DImodel = "FG", data = Switzerland,
             estimate_theta = TRUE)
   
   # DI_reference and DI_compare
-  expect_equal(DI_reference,
+  expect_equal(DI_reference(mod, 4:7, Switzerland, mod$coefficients["theta"]),
                DI_compare(mod))
   
   # anovaDIglm

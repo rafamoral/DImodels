@@ -17,6 +17,7 @@ predict.DI <- function (object, newdata, se.fit = FALSE,
   } else {
     # Getting species columns and DImodel for adding interactions
     type <- match.arg(type)
+    newdata <- as.data.frame(newdata)
     DImodel_tag <- object$DIcall$DImodel
     if (is.null(DImodel_tag)){
       DImodel_tag <- 'CUSTOM'
@@ -45,18 +46,13 @@ predict.DI <- function (object, newdata, se.fit = FALSE,
     if (!is.null(prop) & !all(prop %in% colnames(newdata))){
       prop_in_data <- prop[prop %in% colnames(newdata)]
       prop_missing <- prop[!prop %in% prop_in_data]
-      if(all(is_near(rowSums(newdata[, prop_in_data]), 1))){
-        missing_prop_cols <- matrix(0, ncol = length(prop_missing), nrow = nrow(newdata), dimnames = list(NULL, prop_missing))
-        newdata <- cbind(newdata, missing_prop_cols)
-        warning(paste0('Species ', paste0(prop_missing, collapse = ','), ' were not present in newdata. These species proportions are assumed to be 0.'))
-      } else {
-        stop('The species proportions present in newdata don\'t sum to 1.')
-      }
+      missing_prop_cols <- matrix(0, ncol = length(prop_missing), nrow = nrow(newdata), dimnames = list(NULL, prop_missing))
+      newdata <- cbind(newdata, missing_prop_cols)
+      warning(paste0('Species ', paste0(prop_missing, collapse = ', '), ' were not present in newdata. These species proportions are assumed to be 0 and predictions would be returned but might not be meaningful. Check the prop columns in `newdata` to ensure they sum to 1..'))
+    } else if (!is.null(prop) & !all(is_near(rowSums(newdata[, prop]), 1))){
+      warning('The species proportions present in newdata don\'t sum to 1. \nThe predictions would be returned but might not be meaningful. Check the prop columns in `newdata` to ensure they sum to 1.')
     }
     
-    if (!is.null(prop) & !all(is_near(rowSums(newdata[, prop]), 1))){
-      stop('The species proportions present in newdata don\'t sum to 1.')
-    }
     # DI_data doesn't work if dataframe has a single row
     # Adding a dummy row which will be deleted later
     only_one_row <- nrow(newdata) == 1
@@ -136,7 +132,7 @@ predict.DI <- function (object, newdata, se.fit = FALSE,
         
         if (is.numeric(original_data[, covariate])){
           if ( !(covariate %in% colnames(updated_newdata))){
-            warning(paste0(names(structures[structures == covariate]), ' not supplied in newdata. Calculating the prediction for the median value of (', median(original_data[, covariate]),') of \'', covariate,
+            warning(paste0(names(structures[structures == covariate]), ' not supplied in newdata. Calculating the prediction for the median value (', median(original_data[, covariate]),') of \'', covariate,
                            '\' from the training data.'))
             updated_newdata[, covariate] <- median(original_data[, covariate])
           }
@@ -209,7 +205,7 @@ predict.DI <- function (object, newdata, se.fit = FALSE,
       if (length(common_factors)!=0){
         
         # Levels of all factors in extra_formula
-        xlevels <- lapply(common_factors, function(x){levels(original_data[,x])})
+        xlevels <- lapply(common_factors, function(x){levels(as.factor(original_data[,x]))})
         names(xlevels) <- common_factors
         
         for (i in common_factors){

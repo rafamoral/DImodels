@@ -42,14 +42,11 @@ test_that("predict function works", {
   expect_warning(predict(mod, newdata = Switzerland[14:15, -c(4,5)]),
                  regexp = "were not present in newdata.")
   
-  # If species don't sum to 1 then error will be thrown
-  expect_error(predict(mod, newdata = Switzerland[12:13, -c(4,5)]),
+  # If species don't sum to 1 then warning will be thrown
+  expect_warning(predict(mod, newdata = data.frame(p1 = c(0.333, 1), p2 = c(0.333, 0),
+                                                   p3 = c(0.333, 0), p4 = c(0, 1),
+                                                   nitrogen = "50", density = "low")),
                  regexp = "don't sum to 1")
-  
-  # If species approximately sum to 1, this will be allowed up to a tolerance level
-  expect_error(predict(mod, newdata = data.frame(p1 = c(0.333, 1), p2 = c(0.333, 0),
-                                                 p3 = c(0.333, 0), p4 = c(0, 0))),
-               regexp = "don't sum to 1")
   
   
   # Prediction function works for custom formula
