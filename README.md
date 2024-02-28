@@ -24,6 +24,10 @@ species $p_1$, $p_2$, …, $p_S$ from a point in time prior to the
 recording of the response. The proportions sum to 1 for each
 experimental unit.
 
+**Main changes in the package from version 1.3.1 to version 1.3.2**
+
+- The `DI_compare` and `DI_reference` functions have been updated so as to not re-estimate theta when fitting the community model.
+
 **Main changes in the package from version 1.3 to version 1.3.1**
 
 - A `fortify` function method has been added to supplement the data
