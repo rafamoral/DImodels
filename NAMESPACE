@@ -15,7 +15,7 @@ export(theta_CI)
 export(DI_compare)
 export(update_DI)
 export(extract)
-export(contrasts_DI)
+export(contrasts_DI, contrast_matrix)
 export(richness_vs_DI)
 
 S3method(predict, DI)

@@ -24,37 +24,51 @@ species $p_1$, $p_2$, …, $p_S$ from a point in time prior to the
 recording of the response. The proportions sum to 1 for each
 experimental unit.
 
+**Main changes in the package from version 1.3.2 to version 1.3.3**
+
+- A `contrast_matrix()` function is introduced that creates contrast
+  matrices using species proportions which can be passed onto the
+  `contrasts_DI()` function to test for contrasts using a DI model
+  object.
+- All the parameters used for fitting a `DImodel` are stacked onto the
+  model object as attributes and can be accessed using the
+  `attributes()` and `attr()` functions.
+
 **Main changes in the package from version 1.3.1 to version 1.3.2**
 
-- The `DI_compare` and `DI_reference` functions have been updated so as to not re-estimate theta when fitting the community model.
+- The `predict()` function now allows predicting the response for
+  species communities that do not sum to 1, but with a warning notifying
+  the user about this.
+- General bug fixes
 
 **Main changes in the package from version 1.3 to version 1.3.1**
 
-- A `fortify` function method has been added to supplement the data
+- A `fortify()` function method has been added to supplement the data
   fitted to a linear model with model fit statistics.
-- A `describe_model` function is added which can be used to get a short
-  text summary of any DI model.
-- Meta-data about a DI model can be accessed via the `attributes`
+- A `describe_model()` function is added which can be used to get a
+  short text summary of any DI model.
+- Meta-data about a DI model can be accessed via the `attributes()`
   function.
 
 **Main changes in the package from version 1.2 to version 1.3**
 
-- The `DI` and `autoDI` functions now have an additional parameter
+- The `DI()` and `autoDI()` functions now have an additional parameter
   called `ID` which enables the user to group the species identity
   effects (see examples below).
-- The `predict` function now has flexibility to calculate confidence and
-  prediction intervals for the predicted values.
+- The `predict()` function now has flexibility to calculate confidence
+  and prediction intervals for the predicted values.
 
 **Main changes in the package from version 1.1 to version 1.2**
 
 - There are two new functions added to the package:
-  - `predict`: Make predictions from a fitted DI model without having to
-    worry about theta, and the interaction terms in the data.
-  - `contrasts_DI`: Create contrasts for a DI model.
+  - `predict()`: Make predictions from a fitted DI model without having
+    to worry about theta, and the interaction terms in the data.
+  - `contrasts_DI()`: Create contrasts for a DI model.
 
 **Main changes in the package from version 1.0 to version 1.1**
 
-- `DI_data_prepare` is now superseded by `DI_data` (see examples below)
+- `DI_data_prepare()` is now superseded by `DI_data()` (see examples
+  below)
 
 ## `DImodels` installation and load
 
@@ -712,28 +726,27 @@ predict(m3, newdata = predict_data,
 
 The `contrasts_DI` function can be used to compare and formally test for
 a difference in performance of communities within the same as well as
-across different experimental structures
+across different experimental structures.
 
-Comparing the performance of the monocultures of different species at
-treatment A
+The `contrast_vars` parameter can be used to quickly calculate contrasts
+without having to calculate interaction terms Comparing the performance
+of the monocultures of different species at treatment A
 
 ``` r
-contr <- list("p1vsp2" = c(1, -1, 0, 0,  0,  0, 0, 0,  0, 0, 0, 0),
-              "p3vsp5" = c(0,  0, 1, 0, -1,  0, 0, 0,  0, 0, 0, 0),
-              "p4vsp6" = c(0,  0, 0, 1,  0, -1, 0, 0,  0, 0, 0, 0),
-              "p7vsp9" = c(0,  0, 0, 0,  0,  0, 1, 0, -1, 0, 0, 0))
-the_C <- contrasts_DI(m3, contrast = contr)
+contr <- data.frame(p1 = c(1,  0),
+                    p2 = c(-1, 0),
+                    p7 = c(0,  1),
+                    p9 = c(0, -1))
+rownames(contr) <- c("p1_vs_p2", "p7_vs_p9")
+  
+the_C <- contrasts_DI(m3, contrast_vars = contr)
 #> Generated contrast matrix:
-#>        p1_ID p2_ID p3_ID p4_ID p5_ID p6_ID p7_ID p8_ID p9_ID AV treatmentA
-#> p1vsp2     1    -1     0     0     0     0     0     0     0  0          0
-#> p3vsp5     0     0     1     0    -1     0     0     0     0  0          0
-#> p4vsp6     0     0     0     1     0    -1     0     0     0  0          0
-#> p7vsp9     0     0     0     0     0     0     1     0    -1  0          0
-#>        `AV:treatmentB`
-#> p1vsp2               0
-#> p3vsp5               0
-#> p4vsp6               0
-#> p7vsp9               0
+#>          p1_ID p2_ID p3_ID p4_ID p5_ID p6_ID p7_ID p8_ID p9_ID AV treatmentA
+#> p1_vs_p2     1    -1     0     0     0     0     0     0     0  0          0
+#> p7_vs_p9     0     0     0     0     0     0     1     0    -1  0          0
+#>          AV:treatmentB
+#> p1_vs_p2             0
+#> p7_vs_p9             0
 summary(the_C)
 #> 
 #>   Simultaneous Tests for General Linear Hypotheses
@@ -741,26 +754,25 @@ summary(the_C)
 #> Fit: glm(formula = new_fmla, family = family, data = new_data)
 #> 
 #> Linear Hypotheses:
-#>             Estimate Std. Error z value Pr(>|z|)    
-#> p1vsp2 == 0    1.473      0.477   3.088  0.00803 ** 
-#> p3vsp5 == 0   -2.652      0.477  -5.560 1.08e-07 ***
-#> p4vsp6 == 0    1.462      0.477   3.064  0.00870 ** 
-#> p7vsp9 == 0   -5.521      0.477 -11.573  < 2e-16 ***
+#>               Estimate Std. Error z value Pr(>|z|)    
+#> p1_vs_p2 == 0    1.473      0.477   3.088  0.00402 ** 
+#> p7_vs_p9 == 0   -5.521      0.477 -11.573  < 1e-10 ***
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 #> (Adjusted p values reported -- single-step method)
 ```
 
-Comparing across the two treatment levels for monoculture of species 1
+Comparing across the two treatment levels
 
 ``` r
-contr <- list("treatAvsB" = c(1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0))
-the_C <- contrasts_DI(m3, contrast = contr)
+contr <- data.frame("treatmentA" = 1)
+rownames(contr) <- "p1_TreatmentAvsB"
+the_C <- contrasts_DI(m3, contrast_vars = contr)
 #> Generated contrast matrix:
-#>           p1_ID p2_ID p3_ID p4_ID p5_ID p6_ID p7_ID p8_ID p9_ID AV treatmentA
-#> treatAvsB     1     0     0     0     0     0     0     0     0  0          1
-#>           `AV:treatmentB`
-#> treatAvsB               0
+#>                  p1_ID p2_ID p3_ID p4_ID p5_ID p6_ID p7_ID p8_ID p9_ID AV
+#> p1_TreatmentAvsB     0     0     0     0     0     0     0     0     0  0
+#>                  treatmentA AV:treatmentB
+#> p1_TreatmentAvsB          1             0
 summary(the_C)
 #> 
 #>   Simultaneous Tests for General Linear Hypotheses
@@ -768,8 +780,8 @@ summary(the_C)
 #> Fit: glm(formula = new_fmla, family = family, data = new_data)
 #> 
 #> Linear Hypotheses:
-#>                Estimate Std. Error z value Pr(>|z|)    
-#> treatAvsB == 0  12.8993     0.4116   31.34   <2e-16 ***
+#>                       Estimate Std. Error z value Pr(>|z|)    
+#> p1_TreatmentAvsB == 0   3.2278     0.3695   8.735   <2e-16 ***
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 #> (Adjusted p values reported -- single-step method)
@@ -778,35 +790,25 @@ summary(the_C)
 Comparing between two species mixtures
 
 ``` r
-mixA <- c(0.25, 0,      0.25, 0,      0.25, 0,      0.25, 0, 0, 0, 0, 0)
-mixB <- c(0,    0.3333, 0,    0.3333, 0,    0.3333, 0,    0, 0, 0, 0, 0)
+# Suppose these are species communities we wish to compare
+mixA <- c(0.25, 0,      0.25, 0,      0.25, 0,      0.25, 0, 0)
+mixB <- c(0,    0.3333, 0,    0.3333, 0,    0.3333, 0,    0, 0)
 
-# We have the proportions of the individual species in the mixtures, however
-# we still need to calculate the interaction effect for these communities
-contr_data <- data.frame(rbind(mixA, mixB))
-colnames(contr_data) <- names(coef(m3))
+# The contrast can be created by subtracting the species proportions
+contr <- matrix(mixA - mixB, nrow = 1)
+colnames(contr) <- paste0("p", 1:9)
+print(contr)
+#>        p1      p2   p3      p4   p5      p6   p7 p8 p9
+#> [1,] 0.25 -0.3333 0.25 -0.3333 0.25 -0.3333 0.25  0  0
 
-# Adding the interaction effect of the two mixtures
-contr_data$AV <- DI_data_E_AV(prop = 1:9, data = contr_data)$AV
-print(contr_data)
-#>      p1_ID  p2_ID p3_ID  p4_ID p5_ID  p6_ID p7_ID p8_ID p9_ID        AV
-#> mixA  0.25 0.0000  0.25 0.0000  0.25 0.0000  0.25     0     0 0.3750000
-#> mixB  0.00 0.3333  0.00 0.3333  0.00 0.3333  0.00     0     0 0.3332667
-#>      treatmentA `AV:treatmentB`
-#> mixA          0               0
-#> mixB          0               0
-
-# We can now subtract the respective values in each column of the two 
-# mixtures and get our contrast
-my_contrast <- as.matrix(contr_data[1, ] - contr_data[2, ])
-rownames(my_contrast) <- "mixAvsB"
-
-the_C <- contrasts_DI(m3, contrast = my_contrast)
+# The values for the interaction terms will be calculated 
+# automatically 
+the_C <- contrasts_DI(m3, contrast_vars = contr)
 #> Generated contrast matrix:
-#>         p1_ID   p2_ID p3_ID   p4_ID p5_ID   p6_ID p7_ID p8_ID p9_ID         AV
-#> mixAvsB  0.25 -0.3333  0.25 -0.3333  0.25 -0.3333  0.25     0     0 0.04173333
-#>         treatmentA `AV:treatmentB`
-#> mixAvsB          0               0
+#>          p1_ID   p2_ID p3_ID   p4_ID p5_ID   p6_ID p7_ID p8_ID p9_ID         AV
+#> `Test 1`  0.25 -0.3333  0.25 -0.3333  0.25 -0.3333  0.25     0     0 0.04173333
+#>          treatmentA AV:treatmentB
+#> `Test 1`          0             0
 summary(the_C)
 #> 
 #>   Simultaneous Tests for General Linear Hypotheses
@@ -814,8 +816,51 @@ summary(the_C)
 #> Fit: glm(formula = new_fmla, family = family, data = new_data)
 #> 
 #> Linear Hypotheses:
-#>              Estimate Std. Error z value Pr(>|z|)    
-#> mixAvsB == 0   2.0379     0.2599   7.841 4.44e-15 ***
+#>               Estimate Std. Error z value Pr(>|z|)    
+#> `Test 1` == 0   2.0379     0.2599   7.841 4.44e-15 ***
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+#> (Adjusted p values reported -- single-step method)
+```
+
+Additionally, the `contrast_matrix` function provides flexibility to
+manually create the contrast matrix with all the identity, interaction
+and any additional terms in the model. This output can then be passed
+onto the `contrast` parameter in `contrasts_DI` to test for contrasts
+
+``` r
+# p1, p2, p5 and p7 equi-proportional mixture at treatment A
+mixA <- contrast_matrix(object = m3, 
+                        contrast_vars = data.frame("p1" = 0.25, 
+                                                   "p2" = 0.25,                                                          "p5" = 0.25,
+                                                   "p7" = 0.25,
+                                                   "treatmentA" = 1))
+# p2, p4, and p6 equi-proportional mixture at treatment A
+mixB <- contrast_matrix(object = m3, 
+                        contrast_vars = data.frame("p2" = 1/3, 
+                                                   "p4" = 1/3,                                                           "p6" = 1/3,
+                                                   "treatmentA" = 1))
+# Subtracting these two values would give us the contrast for 
+# comparing these mixtures
+my_contrast <- mixA - mixB
+rownames(my_contrast) <- "4_sp_mix vs 3_sp_mix"
+
+# This contrast can be passed to the `contrast` parameter in `contrasts_DI`
+the_C <- contrasts_DI(m3, contrast = my_contrast)
+#> Generated contrast matrix:
+#>                      p1_ID       p2_ID p3_ID      p4_ID p5_ID      p6_ID p7_ID
+#> 4_sp_mix vs 3_sp_mix  0.25 -0.08333333     0 -0.3333333  0.25 -0.3333333  0.25
+#>                      p8_ID p9_ID         AV treatmentA AV:treatmentB
+#> 4_sp_mix vs 3_sp_mix     0     0 0.04166667          0             0
+summary(the_C)
+#> 
+#>   Simultaneous Tests for General Linear Hypotheses
+#> 
+#> Fit: glm(formula = new_fmla, family = family, data = new_data)
+#> 
+#> Linear Hypotheses:
+#>                           Estimate Std. Error z value Pr(>|z|)    
+#> 4_sp_mix vs 3_sp_mix == 0   2.0507     0.2204   9.303   <2e-16 ***
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 #> (Adjusted p values reported -- single-step method)

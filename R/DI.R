@@ -167,6 +167,11 @@ DI <- function(y, prop, DImodel, custom_formula, data,
   attr(the_DI_model, "ID") <- if(DImodel == "CUSTOM") NULL else data_obj$ID_map
   attr(the_DI_model, "theta_flag") <- if(DImodel == "CUSTOM") NULL else estimate_theta
   attr(the_DI_model, "theta_val") <- if(DImodel == "CUSTOM") NULL else the_DI_model$coef["theta"]
+  attr(the_DI_model, "block") <- if(DImodel == "CUSTOM") NULL else block
+  attr(the_DI_model, "density") <- if(DImodel == "CUSTOM") NULL else density
+  attr(the_DI_model, "treat") <- if(DImodel == "CUSTOM") NULL else treat
+  attr(the_DI_model, "extra_formula") <- if(DImodel == "CUSTOM") NULL else extra_formula
+  
   #the_DI_model$aic <- AIC2(the_DI_model)
   class(the_DI_model) <- c("DI", "glm", "lm")
   return(the_DI_model)

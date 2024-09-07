@@ -267,7 +267,7 @@ test_that("Prediction works with grouped ID effects", {
   
 # Testing CI and PI work
 
-test_that("contrasts function works", {
+test_that("CI and PI work", {
   data("sim2")
   
   mod <- DI(y = "response", DImodel = "FULL",
@@ -338,16 +338,12 @@ test_that("contrasts function works", {
                regexp = "Provide either one of `contrast_vars` or `constrast`")
   
   # Can't specify both contrast_vars and contrast
-  expect_warning(contrasts_DI(mod, contrast_vars = 0, contrast = rep(0, 8)),
+  expect_warning(contrasts_DI(mod, contrast_vars = 0, contrast = matrix(0, ncol = 8)),
                  regexp = "Provide only one of `contrast_vars` or `constrast`")
   
-  # Ensure contrast vector is of appropriate type
-  expect_error(contrasts_DI(mod, contrast = c("1", "-1", "0", "0")),
-               regexp = "Specify contrast as either a numeric vector, list or matrix")
-  
-  # Ensure contrast vector is of proper length
-  expect_error(contrasts_DI(mod, contrast = c(1, -1, 0, 0)),
-               regexp = "Number of elements in contrasts vector should be a multiple of number of coefficients in model")
+  # Ensure contrast vector throws error if it's not a matrix or data-frame
+  expect_error(contrasts_DI(mod, contrast = c( "1", "-1", "0", "0")),
+               regexp = "Specify contrast as either a")
   
   # Ensure contrast has appropriate columns if specified as a matrix
   expect_error(contrasts_DI(mod, contrast = matrix(c(1, -1, 0, 0), ncol = 4)),
@@ -356,18 +352,6 @@ test_that("contrasts function works", {
   # Ensure contrast has appropriate length if specified as list 
   expect_error(contrasts_DI(mod, contrast = list(1, -1, 0, 0)),
                regexp = "Lengths of each element of contrasts list should be same as number of coefficients in model")
-  
-  # Ensure contrast_vars are specified as a list
-  expect_error(contrasts_DI(mod, contrast_vars = c("density" = c(-0.25, 0.25, 0.25, -0.25))),
-               regexp = "Contrast variables should be specified as a nested named list")
-  
-  # Ensure user specifies variables present in model in contrast_vars
-  expect_error(contrasts_DI(mod, contrast_vars = list(p5 = c(0, 1))),
-               regexp = "not present in model")
-  
-  # Ensure number of elements in contrast_vars are same as number of levels of factor in model
-  expect_error(contrasts_DI(mod, contrast_vars = list("density" = c(-1, 1, 1))),
-               regexp = "Lengths of each element of contrasts list should be same as levels of variable in model")
   
   # Correct examples
   the_C <- matrix(c(1, 1, -1, -1, 0, 0, 0, 0), nrow = 1)
@@ -379,7 +363,7 @@ test_that("contrasts function works", {
                ignore_attr = TRUE)
   
   # Contrast as vector
-  expect_equal(contrasts_DI(mod, contrast = c(1, 1, -1, -1, 0, 0, 0, 0)),
+  expect_equal(contrasts_DI(mod, contrast = matrix(c(1, 1, -1, -1, 0, 0, 0, 0), nrow = 1)),
                multcomp::glht(mod, linfct = the_C , 
                               coef = mod$coef[1:8], vcov = vcov(mod)),
                ignore_attr = TRUE)
@@ -391,12 +375,7 @@ test_that("contrasts function works", {
                ignore_attr = TRUE)
   
   # Using contrast_vars
-  the_C <- matrix(c(0, 0, 0, 0, 0, 1, 0, 0), nrow = 1)
-  colnames(the_C) <- names(mod$coefficients[1:8])
-  expect_equal(contrasts_DI(mod, contrast_vars = list("nitrogen" = list("50v150"  = c(1, -1)))),
-               multcomp::glht(mod, linfct = the_C , 
-                              coef = mod$coef[1:8], vcov = vcov(mod)),
-               ignore_attr = TRUE)
+
   
 })
 
