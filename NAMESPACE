@@ -5,7 +5,8 @@ import(utils)
 import(hnp)
 import(rootSolve)
 importFrom(ggplot2, "fortify")
-
+importFrom(multcomp, "adjusted")
+importFrom(multcompView, "multcompLetters")
 
 export(autoDI)
 export(describe_model)
@@ -17,6 +18,7 @@ export(update_DI)
 export(extract)
 export(contrasts_DI, contrast_matrix)
 export(richness_vs_DI)
+export(compare_communities)
 
 S3method(predict, DI)
 S3method(fortify, DI)

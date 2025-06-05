@@ -371,9 +371,9 @@ predict.DI <- function (object, newdata, se.fit = FALSE,
 }
 
 # Contrasts function
-contrasts_DI <- function(object, contrast_vars, contrast, ...){
+contrasts_DI <- function(object, contrast_vars, contrast, verbose = TRUE, ...){
   if (missing(object) | !inherits(object, "DI")){
-    stop("Please provied a DImodels model object")
+    stop("Please provide a DImodels model object")
   }
   
   if (missing(contrast_vars) & missing(contrast)){
@@ -429,8 +429,11 @@ contrasts_DI <- function(object, contrast_vars, contrast, ...){
   
   contr_matrix <- as.matrix(the_C)
   
-  cat("Generated contrast matrix:\n")
-  print(contr_matrix)
+  if(isTRUE(verbose)){
+    cat("Generated contrast matrix:\n")
+    print(contr_matrix)
+  }
+  
   
   contr.test <- multcomp::glht(object, linfct = contr_matrix, coef = betas, vcov = vcov(object), ...)
   return(contr.test)
@@ -589,6 +592,16 @@ contrast_matrix <- function(object, contrast_vars){
     colnames(FGs) <- gsub("FG_.", "", colnames(FGs), fixed = TRUE)
     the_C$FG_ <- as.matrix(FGs)
   }
+  
+  # Add any missing variables in the data needed for constrast
+  the_C <- add_extra_vars(object, newdata = the_C)
+  
+  # Covert the factor variables in the data to their one-hot encoded counterparts
+  # browser()
+  the_C <- as.data.frame(
+    model.matrix(delete.response(terms(object$DIcheck_formula)),
+                 data = the_C)
+  )
   
   # Add any extra variables in model that weren't specified with value 0
   objTerms <- names(attr(stats::terms(object), "dataClasses"))[-1]

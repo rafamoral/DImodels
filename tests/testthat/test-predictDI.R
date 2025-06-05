@@ -331,7 +331,7 @@ test_that("contrasts function works", {
   
   # Model should be a DImodels object
   expect_error(contrasts_DI(lm(yield ~ p1 + p2, data = Switzerland)), 
-               regexp = "Please provied a DImodels model object")
+               regexp = "Please provide a DImodels model object")
   
   # Mandatory to specify either constrast_vars or contrast
   expect_error(contrasts_DI(mod), 

@@ -14,7 +14,7 @@ Compute contrasts for Diversity Interactions (DI) models
 \code{contrast_matrix} is a helper function which can be used to prepare a contrast matrix which contains all the ID effects, interactions and additional model variables. The output of this function can then be passed to \code{contrasts_DI} to test contrasts.
 }
 \usage{
-contrasts_DI(object, contrast_vars, contrast, ...)
+contrasts_DI(object, contrast_vars, contrast, verbose, ...)
 
 contrast_matrix(object, contrast_vars)
 }
@@ -35,6 +35,7 @@ contrast_matrix(object, contrast_vars)
                   Recommended only for advanced users who want more control for generating the contrast as most general contrasts can be generated using the \code{contrast_vars} argument. 
     
                   Overrides \code{contrast_vars} if specified.}
+  \item{verbose}{A boolean (TRUE/FALSE) value indicating whether to print the internally generated contrast matrix. Default is TRUE}
   \item{...}{Additional arguments passed to the \code{\link[multcomp]{glht}} function}
 }
 \details{
