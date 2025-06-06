@@ -598,10 +598,13 @@ contrast_matrix <- function(object, contrast_vars){
   
   # Covert the factor variables in the data to their one-hot encoded counterparts
   # browser()
-  the_C <- as.data.frame(
+  temp_C <- as.data.frame(
     model.matrix(delete.response(terms(object$DIcheck_formula)),
                  data = the_C)
   )
+  # Add one-hot encoded values to the contrast
+  the_C <- cbind(the_C, temp_C[, setdiff(colnames(temp_C), colnames(the_C))])
+  
   
   # Add any extra variables in model that weren't specified with value 0
   objTerms <- names(attr(stats::terms(object), "dataClasses"))[-1]
@@ -609,6 +612,8 @@ contrast_matrix <- function(object, contrast_vars){
   if(length(missing) > 0){
     the_C[, missing] <- 0
   }
+  
+  # Creating the final contrast
   the_C <- as.matrix(model.frame(object$formula[-2], data = the_C))
   return(the_C)
 }
