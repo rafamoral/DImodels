@@ -1,0 +1,24 @@
+bibentry(
+  bibtype  = "Article",
+  title    = "Going beyond richness: Modelling the BEF relationship using species identity, evenness, richness and species interactions via the {DImodels} {R} package",
+  author   = "Rafael A. Moral and Rishabh Vishwakarma and John Connolly and Laura Byrne and Catherine Hurley and John A. Finn and Caroline Brophy",
+  journal  = "Methods in Ecology and Evolution",
+  year     = "2023",
+  volume   = "14",
+  number   = "9",
+  pages    = "2250--2258",
+  doi      = "https://doi.org/10.1111/2041-210X.14158"
+)
+
+bibentry(
+  bibtype  = "Article",
+  title    = "Diversity--interaction modeling: estimating contributions of species identities and interactions to ecosystem function",
+  author   = "Laura Kirwan and John Connolly and John Finn and Caroline Brophy and Andreas L{\"u}scher and Maria--Teresa Sebasti{\`a}",
+  journal  = "Ecology",
+  year     = "2009",
+  volume   = "90",
+  number   = "8",
+  pages    = "2032--2038",
+  doi      = "https://doi.org/10.1890/08-1684.1"
+)
+

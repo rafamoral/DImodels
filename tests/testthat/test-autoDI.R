@@ -23,7 +23,10 @@ test_that("autoDI works", {
   mod <- autoDI(y = "yield", prop = 4:7, treat = "nitrogen", 
      density = "density", data = Switzerland, step0 = TRUE)
   expect_equal(mod$coef, 
-               c(7.95766735824737, 8.20701135559464, 14.9580039717454, 12.714998503244, 10.0411709753684, 24.3274154382015, 14.4111121470316, 22.5631845982022, 13.1803407057576, 1.1086838807011, -0.137755987617647),
+               c(8.14600999363359, 8.38588311720963, 15.1427101611243, 12.9554136203892,
+                 -0.955897328641745, 0.137755987617647, 
+                 4.21018213140694, 14.7949628919445, 7.98800560096288, 13.6292441254134, 7.29836313854215, -1.9026768020549, 
+                 0.77060691111899),
                ignore_attr = TRUE)
   
   # Additional models with different combinations of treat, density and block to cover different possible conditions

@@ -58,7 +58,7 @@ autoDI <- function(y, prop, data, block, density, treat, ID, FG = NULL,
   if(missing(FG)){
     FG <- NULL
   }
-
+  
   if(missing(ID)){
     if(is.numeric(prop)){
       ID <- paste0(colnames(data)[prop], "_ID")
@@ -74,7 +74,12 @@ autoDI <- function(y, prop, data, block, density, treat, ID, FG = NULL,
   }
   
   # Step 1
-  step1_model <- autoDI_step1(y = y, block = block, density = density, prop = prop, treat = treat, ID = ID, family = family, data = data, selection = selection)
+  if(selection != "Ftest") {
+    step1_model <- autoDI_step1(y = y, block = block, density = density, prop = prop, treat = treat, ID = ID, family = family, data = data, selection = selection)
+  } else {
+    message("F tests were specified for model selection, however AICc will be used for step 1, since models are not nested in this step")
+    step1_model <- autoDI_step1(y = y, block = block, density = density, prop = prop, treat = treat, ID = ID, family = family, data = data, selection = "AICc")
+  }
   
   selected_model <- step1_model$model
   theta_flag <- step1_model$theta_flag
@@ -90,7 +95,7 @@ autoDI <- function(y, prop, data, block, density, treat, ID, FG = NULL,
   if(step4 & (nrow(unique(data[, prop])) == nrow(data))){
     message("\n", strrep("-", getOption("width")))
     message("Step 4: Comparing the final selected model with the reference (community) model")
-    message('Lack of fit test is not possible as there are no repititions of communities in the data. Skipping step 4')
+    message('Lack-of-fit test is not possible as there are no replicates of communities in the data. Skipping step 4')
     step4 <- FALSE
   }
   
