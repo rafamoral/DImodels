@@ -20,7 +20,7 @@ data from experiments that explore the effects of species diversity
 (from a pool of *S* species) on community-level responses. Data suitable
 for DI models will include (at least) for each experimental unit: a
 response recorded at a point in time, and a set of proportions of *S*
-species $p_1$, $p_2$, …, $p_S$ from a point in time prior to the
+species $`p_1`$, $`p_2`$, …, $`p_S`$ from a point in time prior to the
 recording of the response. The proportions sum to 1 for each
 experimental unit.
 
@@ -30,6 +30,9 @@ experimental unit.
   matrices using species proportions which can be passed onto the
   `contrasts_DI()` function to test for contrasts using a DI model
   object.
+- A `compare_communities()` function is added which allows for pairwise
+  comparisons between various specific communities and assigns compact
+  letter displays (CLD) to each community.
 - All the parameters used for fitting a `DImodel` are stacked onto the
   model object as attributes and can be accessed using the
   `attributes()` and `attr()` functions.
@@ -113,27 +116,29 @@ it was assumed that species 1 to 5 come from functional group 1, species
 group 3, where species in the same functional group are assumed to have
 similar traits. The following equation was used to simulate the data.
 
-$$ y = \sum_{i=1}^{9}\beta_ip_i + \omega_{11}\sum_{\substack{i,j = 1 \\ i<j}}^5p_ip_j + \omega_{22}p_6p_7 + \omega_{33}p_8p_9 \\ + \omega_{12}\sum_{\substack{i \in {1,2,3,4,5} \\ j \in {6,7}}}p_ip_j + \omega_{13}\sum_{\substack{i \in {1,2,3,4,5} \\ j \in {8,9}}}p_ip_j + \omega_{23}\sum_{\substack{i \in {6,7} \\ j \in {8,9}}}p_ip_j + \gamma_k + \epsilon$$
-Where $\gamma_k$ is a treatment effect with two levels (*k = 1,2*) and
-$\epsilon$ was assumed IID N(0, $\sigma^2$). The parameter values are in
-the following table.
+``` math
+ y = \sum_{i=1}^{9}\beta_ip_i + \omega_{11}\sum_{\substack{i,j = 1 \\ i<j}}^5p_ip_j + \omega_{22}p_6p_7 + \omega_{33}p_8p_9 \\ + \omega_{12}\sum_{\substack{i \in {1,2,3,4,5} \\ j \in {6,7}}}p_ip_j + \omega_{13}\sum_{\substack{i \in {1,2,3,4,5} \\ j \in {8,9}}}p_ip_j + \omega_{23}\sum_{\substack{i \in {6,7} \\ j \in {8,9}}}p_ip_j + \gamma_k + \epsilon
+```
+Where $`\gamma_k`$ is a treatment effect with two levels (*k = 1,2*) and
+$`\epsilon`$ was assumed IID N(0, $`\sigma^2`$). The parameter values
+are in the following table.
 
-| Parameter | Value |         | Parameter     | Value |
-|-----------|-------|---------|---------------|-------|
-| $\beta_1$ | 10    |         | $\omega_{11}$ | 2     |
-| $\beta_2$ | 9     |         | $\omega_{22}$ | 3     |
-| $\beta_3$ | 8     |         | $\omega_{33}$ | 1     |
-| $\beta_4$ | 7     |         | $\omega_{12}$ | 4     |
-| $\beta_5$ | 11    |         | $\omega_{13}$ | 9     |
-| $\beta_6$ | 6     |         | $\omega_{23}$ | 3     |
-| $\beta_7$ | 5     |         | $\gamma_1$    | 3     |
-| $\beta_8$ | 8     |         | $\gamma_2$    | 0     |
-| $\beta_9$ | 9     |         | $\sigma$      | 1.2   |
+| Parameter   | Value |         | Parameter       | Value |
+|-------------|-------|---------|-----------------|-------|
+| $`\beta_1`$ | 10    |         | $`\omega_{11}`$ | 2     |
+| $`\beta_2`$ | 9     |         | $`\omega_{22}`$ | 3     |
+| $`\beta_3`$ | 8     |         | $`\omega_{33}`$ | 1     |
+| $`\beta_4`$ | 7     |         | $`\omega_{12}`$ | 4     |
+| $`\beta_5`$ | 11    |         | $`\omega_{13}`$ | 9     |
+| $`\beta_6`$ | 6     |         | $`\omega_{23}`$ | 3     |
+| $`\beta_7`$ | 5     |         | $`\gamma_1`$    | 3     |
+| $`\beta_8`$ | 8     |         | $`\gamma_2`$    | 0     |
+| $`\beta_9`$ | 9     |         | $`\sigma`$      | 1.2   |
 
-Here, the non-linear parameter $\theta$ that can be included as a power
-on each $p_ip_j$ component of each interaction variable (Connolly et al
-2013) was set equal to one and thus does not appear in the equation
-above.
+Here, the non-linear parameter $`\theta`$ that can be included as a
+power on each $`p_ip_j`$ component of each interaction variable
+(Connolly et al 2013) was set equal to one and thus does not appear in
+the equation above.
 
 The 206 rows of proportions contained in the dataset `design_a`
 (supplied in the package) were used to simulate the `sim3` dataset. Here
@@ -287,11 +292,11 @@ auto1 <- autoDI(y = "response", prop = 4:12, treat = "treatment",
 The output of `autoDI`, works through the following process:
 
 1.  Step 1 fitted the average interactions (`AV`) model and uses profile
-    likelihood to estimate the non-linear parameter $\theta$ and tests
-    whether or not it differs from one. $\theta$ was estimated to be
-    0.96814 and was not significantly different from one ($p = 0.4572$).
-    Therefore, subsequent steps assumed $\theta=1$ when fitting the DI
-    models.
+    likelihood to estimate the non-linear parameter $`\theta`$ and tests
+    whether or not it differs from one. $`\theta`$ was estimated to be
+    0.96814 and was not significantly different from one
+    ($`p = 0.4572`$). Therefore, subsequent steps assumed $`\theta=1`$
+    when fitting the DI models.
 2.  Step 2 fitted five different DI models, each with a different form
     of species interactions and treatment was always included. The
     functional group model (FG) was the selected model. This assumes
@@ -299,9 +304,9 @@ The output of `autoDI`, works through the following process:
     membership.
 3.  Step 3 provided a test for the treatment and indicated that the
     treatment, included as an additive factor, was significant and
-    needed in the model ($p < 0.0001$).
+    needed in the model ($`p < 0.0001`$).
 4.  Step 4 provides a lack of fit test, here there was no indication of
-    lack of fit in the model selected in Step 3 ($p = 0.6423$).
+    lack of fit in the model selected in Step 3 ($`p = 0.6423`$).
 
 Further details on each of these steps are available in the `autoDI`
 help file. Run the following code to access the documentation.
@@ -350,7 +355,7 @@ summary(auto1)
 ```
 
 If the final model selected by autoDI includes a value of theta other
-than 1, then a 95% confidence interval for $\theta$ can be generated
+than 1, then a 95% confidence interval for $`\theta`$ can be generated
 using the `theta_CI` function:
 
 ``` r
@@ -740,10 +745,12 @@ contr <- data.frame(p1 = c(1,  0),
 rownames(contr) <- c("p1_vs_p2", "p7_vs_p9")
   
 the_C <- contrasts_DI(m3, contrast_vars = contr)
+#> Warning in add_extra_vars(object, newdata = the_C): treatment not supplied in
+#> newdata. Calculating for 'treatment' = A
 #> Generated contrast matrix:
 #>          p1_ID p2_ID p3_ID p4_ID p5_ID p6_ID p7_ID p8_ID p9_ID AV treatmentA
-#> p1_vs_p2     1    -1     0     0     0     0     0     0     0  0          0
-#> p7_vs_p9     0     0     0     0     0     0     1     0    -1  0          0
+#> p1_vs_p2     1    -1     0     0     0     0     0     0     0  0          1
+#> p7_vs_p9     0     0     0     0     0     0     1     0    -1  0          1
 #>          AV:treatmentB
 #> p1_vs_p2             0
 #> p7_vs_p9             0
@@ -755,8 +762,8 @@ summary(the_C)
 #> 
 #> Linear Hypotheses:
 #>               Estimate Std. Error z value Pr(>|z|)    
-#> p1_vs_p2 == 0    1.473      0.477   3.088  0.00402 ** 
-#> p7_vs_p9 == 0   -5.521      0.477 -11.573  < 1e-10 ***
+#> p1_vs_p2 == 0   4.7010     0.6034   7.791  < 1e-10 ***
+#> p7_vs_p9 == 0  -2.2931     0.6034  -3.800 0.000288 ***
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 #> (Adjusted p values reported -- single-step method)
@@ -768,6 +775,8 @@ Comparing across the two treatment levels
 contr <- data.frame("treatmentA" = 1)
 rownames(contr) <- "p1_TreatmentAvsB"
 the_C <- contrasts_DI(m3, contrast_vars = contr)
+#> Warning in add_extra_vars(object, newdata = the_C): treatment not supplied in
+#> newdata. Calculating for 'treatment' = A
 #> Generated contrast matrix:
 #>                  p1_ID p2_ID p3_ID p4_ID p5_ID p6_ID p7_ID p8_ID p9_ID AV
 #> p1_TreatmentAvsB     0     0     0     0     0     0     0     0     0  0
@@ -804,11 +813,13 @@ print(contr)
 # The values for the interaction terms will be calculated 
 # automatically 
 the_C <- contrasts_DI(m3, contrast_vars = contr)
+#> Warning in add_extra_vars(object, newdata = the_C): treatment not supplied in
+#> newdata. Calculating for 'treatment' = A
 #> Generated contrast matrix:
 #>          p1_ID   p2_ID p3_ID   p4_ID p5_ID   p6_ID p7_ID p8_ID p9_ID         AV
 #> `Test 1`  0.25 -0.3333  0.25 -0.3333  0.25 -0.3333  0.25     0     0 0.04173333
 #>          treatmentA AV:treatmentB
-#> `Test 1`          0             0
+#> `Test 1`          1             0
 summary(the_C)
 #> 
 #>   Simultaneous Tests for General Linear Hypotheses
@@ -817,7 +828,7 @@ summary(the_C)
 #> 
 #> Linear Hypotheses:
 #>               Estimate Std. Error z value Pr(>|z|)    
-#> `Test 1` == 0   2.0379     0.2599   7.841 4.44e-15 ***
+#> `Test 1` == 0   5.2658     0.4327   12.17   <2e-16 ***
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 #> (Adjusted p values reported -- single-step method)
@@ -835,11 +846,15 @@ mixA <- contrast_matrix(object = m3,
                                                    "p2" = 0.25,                                                          "p5" = 0.25,
                                                    "p7" = 0.25,
                                                    "treatmentA" = 1))
+#> Warning in add_extra_vars(object, newdata = the_C): treatment not supplied in
+#> newdata. Calculating for 'treatment' = A
 # p2, p4, and p6 equi-proportional mixture at treatment A
 mixB <- contrast_matrix(object = m3, 
                         contrast_vars = data.frame("p2" = 1/3, 
                                                    "p4" = 1/3,                                                           "p6" = 1/3,
                                                    "treatmentA" = 1))
+#> Warning in add_extra_vars(object, newdata = the_C): treatment not supplied in
+#> newdata. Calculating for 'treatment' = A
 # Subtracting these two values would give us the contrast for 
 # comparing these mixtures
 my_contrast <- mixA - mixB
@@ -864,6 +879,73 @@ summary(the_C)
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 #> (Adjusted p values reported -- single-step method)
+```
+
+### Compact letter display (CLD) for community comparisons
+
+The `compare_communities` function can be used to perform pairwise
+comparisons of communities and assign CLD to each community. The
+function accepts a fitted DI model object and a `data.frame` containing
+the proportions of communities to be compared and optionally, values for
+any additional treatment variables.
+
+``` r
+comms_to_compare <- sim3[c(36, 79, 352), 3:12]
+compare_communities(m3, data = comms_to_compare)
+#> $Contrasts
+#> 
+#>   Simultaneous Tests for General Linear Hypotheses
+#> 
+#> Fit: glm(formula = new_fmla, family = family, data = new_data)
+#> 
+#> Linear Hypotheses:
+#>             Estimate Std. Error z value Pr(>|z|)    
+#> 36-79 == 0   -4.6036     0.4988  -9.229   <1e-05 ***
+#> 36-352 == 0  -0.3314     0.5010  -0.661    0.778    
+#> 79-352 == 0   4.2721     0.2571  16.617   <1e-05 ***
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+#> (Adjusted p values reported -- single-step method)
+#> 
+#> 
+#> $CLD
+#>  36  79 352 
+#> "a" "b" "a"
+```
+
+The function returns a list containing the pairwise contrasts and CLD
+symbol for each community.
+
+If all possible pairwise comparisons are not desired, the `ref` argument
+can be used to compare all communities against a specific reference.
+Additionally, the `adjust` argument can be used to choose a particular
+adjustment method for calculating the p-values.
+
+``` r
+# ref accepts either a row-number of rowname of the community to be used as reference
+# adjust should be one of the following
+# c("single-step", "Shaffer", "Westfall", "free", "holm",
+#   "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "none") 
+compare_communities(m3, data = comms_to_compare,
+                    ref = 3, adjust = "bonferroni")
+#> $Contrasts
+#> 
+#>   Simultaneous Tests for General Linear Hypotheses
+#> 
+#> Fit: glm(formula = new_fmla, family = family, data = new_data)
+#> 
+#> Linear Hypotheses:
+#>             Estimate Std. Error z value Pr(>|z|)    
+#> 36-352 == 0  -0.3314     0.5010  -0.661        1    
+#> 79-352 == 0   4.2721     0.2571  16.617   <2e-16 ***
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+#> (Adjusted p values reported -- bonferroni method)
+#> 
+#> 
+#> $CLD
+#> 352 (ref)        36        79 
+#>       "a"       "a"       "b"
 ```
 
 ## References

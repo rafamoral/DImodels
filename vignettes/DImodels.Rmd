@@ -25,6 +25,7 @@ The `DImodels` package is designed to make fitting Diversity-Interactions models
 __Main changes in the package from version 1.3.2 to version 1.3.3__
 
 - A `contrast_matrix()` function is introduced that creates contrast matrices using species proportions which can be passed onto the `contrasts_DI()` function to test for contrasts using a DI model object.
+- A `compare_communities()` function is added which allows for pairwise comparisons between various specific communities and assigns compact letter displays (CLD) to each community.
 - All the parameters used for fitting a `DImodel` are stacked onto the model object as attributes and can be accessed using the `attributes()` and `attr()` functions.
 
 __Main changes in the package from version 1.3.1 to version 1.3.2__
@@ -365,6 +366,29 @@ rownames(my_contrast) <- "4_sp_mix vs 3_sp_mix"
 # This contrast can be passed to the `contrast` parameter in `contrasts_DI`
 the_C <- contrasts_DI(m3, contrast = my_contrast)
 summary(the_C)
+```
+
+### Compact letter display (CLD) for community comparisons
+
+The `compare_communities` function can be used to perform pairwise comparisons of communities and assign CLD to each community. The function accepts a fitted DI model object and a `data.frame` containing the proportions of communities to be compared and optionally, values for any additional treatment variables.
+
+```{r}
+comms_to_compare <- sim3[c(36, 79, 352), 3:12]
+compare_communities(m3, data = comms_to_compare)
+```
+
+
+The function returns a list containing the pairwise contrasts and CLD symbol for each community.
+
+If all possible pairwise comparisons are not desired, the `ref` argument can be used to compare all communities against a specific reference. Additionally, the `adjust` argument can be used to choose a particular adjustment method for calculating the p-values.
+
+```{r}
+# ref accepts either a row-number of rowname of the community to be used as reference
+# adjust should be one of the following
+# c("single-step", "Shaffer", "Westfall", "free", "holm",
+#   "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "none") 
+compare_communities(m3, data = comms_to_compare,
+                    ref = 3, adjust = "bonferroni")
 ```
 
 
