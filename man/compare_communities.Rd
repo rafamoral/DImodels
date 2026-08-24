@@ -20,7 +20,7 @@ compare_communities(object, data, ref = NULL,
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{object}{A model output which is the output of \code{\link{DI}} or \code{\link{autoDI}}.}
+  \item{object}{A model which is the output of \code{\link{DI}} or \code{\link{autoDI}}.}
   \item{data}{A data.frame containing the proportions for the species communities which are to be compared. Any additional variables such as specific values for a treatment variable can also be specified.}
   \item{ref}{An optional argument specifying a particular to be considered a reference. If specified, all comparisons would be made with respect to this community, as opposed to pairwise comparisons.}
   \item{adjust}{A character string specifying the p-value adjustment method to be used to account for multiple comparisons. All arguments supported by the \code{\link[multcomp]{adjusted}} are supported. The default is "single-step" adjustment.}
@@ -33,11 +33,11 @@ compare_communities(object, data, ref = NULL,
 The contrasts are calculated and tested using the \code{\link[multcomp]{glht}} function in the \code{multcomp} package while the cld letters are assigned using the \code{\link[multcompView]{multcompLetters}} function from \code{multcompView}.
 The rownames of the specified \code{data.frame} are used to identify the communities and are labelled 1, 2, ..., n, etc. by default, but this can be changed by updating the rownames of the specified \code{data.frame}.
 
-Note: If any variables needed for making predictions are missing in `data`, the would be assumed to be at their median value (if numeric) or base level (if categorical). Specify the values for all variables manually to perform comparisons at a specific level of any categorical variable (treatment for example).
+Note: If any variables needed for making predictions are missing in `data`, they would be assumed to be at their median value (if numeric) or base level (if categorical). Specify the values for all variables manually to perform comparisons at a specific level of any categorical variable (treatment for example).
 %%  ~~ If necessary, more details than the description above ~~
 }
 \value{
-An list containing the following objects is returned.
+A list containing the following objects is returned.
 
 \item{Contrasts}{An object of class \code{\link[multcomp]{summary.glht}} containing the summary of the specific comparisons performed internally for assigning the compact display letters.}
 \item{CLD}{An object of class \code{\link[multcompView]{multcompLetters}} with compact letters assigned to each species community based on the p-values shown in the `Contrasts` object.}

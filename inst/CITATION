@@ -7,7 +7,7 @@ bibentry(
   volume   = "14",
   number   = "9",
   pages    = "2250--2258",
-  doi      = "https://doi.org/10.1111/2041-210X.14158"
+  doi      = "10.1111/2041-210X.14158"
 )
 
 bibentry(
@@ -19,6 +19,6 @@ bibentry(
   volume   = "90",
   number   = "8",
   pages    = "2032--2038",
-  doi      = "https://doi.org/10.1890/08-1684.1"
+  doi      = "10.1890/08-1684.1"
 )
 

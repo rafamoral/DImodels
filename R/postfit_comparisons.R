@@ -68,6 +68,16 @@ contrasts_DI <- function(object, contrast_vars, contrast, verbose = TRUE, ...){
 }
 
 # Helpers for contrast function
+# Helper function to add only those columns to a data which are not present 
+add_not_present <- function(data, x) {
+  skip <- intersect(colnames(data), colnames(x))
+  x <- x[, !colnames(x) %in% colnames(data), drop = FALSE]
+  list(data = data.frame(data, x, check.names = FALSE),
+       added = names(x),
+       warn_flag = length(skip) > 0)
+}
+
+
 add_int_ID <- function(object, newdata){
   # Meta data from model
   prop <- attr(object, "prop")
@@ -96,18 +106,40 @@ add_int_ID <- function(object, newdata){
     theta_value <- 1
   }
   
+  # Will be added as attribute later to identify which columns are interactions
+  # By default keep it NULL, so ID and STR models have no interactions to point to
+  int_cols <- NULL
+  present_warn <- FALSE
   if (!DImodel_tag %in% c("ID", "STR")) {
     
     extra_variables <- DI_data(prop = prop, FG = attr(object, "FG"),
-                               data = newdata, theta = theta_value, what = DImodel_tag)
+                               # If any columns end with _add this throw error. Will handle these in ADD branch
+                               data = newdata[, !grepl("_add$", names(newdata)), drop = FALSE], 
+                               theta = theta_value, 
+                               what = DImodel_tag)
     if (DImodel_tag == "E") {
-      updated_newdata <- data.frame(newdata, E = extra_variables)
+      if(!"E" %in% colnames(newdata)){
+        updated_newdata <- data.frame(newdata, E = extra_variables, check.names = FALSE)
+      } else {
+        updated_newdata <- newdata
+        present_warn <- TRUE
+      }
+      int_cols <- "E"
     }
     if (DImodel_tag == "AV") {
-      updated_newdata <- data.frame(newdata, AV = extra_variables)
+      if(!"AV" %in% colnames(newdata)){
+        updated_newdata <- data.frame(newdata, AV = extra_variables, check.names = FALSE)
+      } else {
+        updated_newdata <- newdata
+        present_warn <- TRUE
+      }
+      int_cols <- "AV"
     }
     if (DImodel_tag == "ADD") {
-      updated_newdata <- data.frame(newdata, extra_variables)
+      res <- add_not_present(newdata, extra_variables)
+      updated_newdata <- res$data
+      present_warn <- res$warn_flag
+      int_cols <- colnames(extra_variables)
     }
     if (DImodel_tag == "FG") {
       FG_switch_flags <- c(eval(object$DIcall$treat),
@@ -118,15 +150,27 @@ add_int_ID <- function(object, newdata){
       if(any(!is.null(FG_switch_flags))){
         colnames(extra_variables) <- paste0("FG_",
                                             colnames(extra_variables))
-        updated_newdata <- data.frame(newdata, extra_variables)
+        res <- add_not_present(newdata, extra_variables)
+        updated_newdata <- res$data
+        present_warn <- res$warn_flag
+        int_cols <- colnames(extra_variables)
       } else {
-        newdata[, 'FG_'] <- extra_variables
-        updated_newdata <- newdata 
+        #browser()
+        if(!"FG_" %in% colnames(newdata)){
+          newdata[, 'FG_'] <- extra_variables
+          updated_newdata <- newdata 
+        } else {
+          updated_newdata <- newdata
+          present_warn <- TRUE
+        }
+        int_cols <- "FG_"
       }
     }
     if (DImodel_tag == "FULL") {
-      updated_newdata <- data.frame(newdata, extra_variables,
-                                    check.names = FALSE)
+      res <- add_not_present(newdata, extra_variables)
+      updated_newdata <- res$data
+      present_warn <- res$warn_flag
+      int_cols <- colnames(extra_variables)
     }
   } else {
     updated_newdata <- newdata
@@ -135,13 +179,28 @@ add_int_ID <- function(object, newdata){
   # Grouping ID terms
   grouped_IDs <- group_IDs(data = updated_newdata, prop = prop, ID = ID_cols)
   ID_not_in_prop <- grouped_IDs[, !colnames(grouped_IDs) %in% prop, drop = FALSE]
-  updated_newdata <- cbind(updated_newdata, ID_not_in_prop)
+  res <- add_not_present(updated_newdata, ID_not_in_prop)
+  updated_newdata <- res$data
+  ID_warn <- res$warn_flag
+  
+  # Throw warning about data already having ID or int columns and that they weren't changed
+  if(isTRUE(ID_warn) || isTRUE(present_warn)){
+    warning("Some identity or interaction effects were already present in the data. ",
+            "These columns were left unchanged.")
+  }
   
   # Removing the dummy row added
   if (only_one_row) {
     updated_newdata <- updated_newdata[1,]
   }
-  
+  #browser()
+  class(updated_newdata) <- class(newdata)
+  missing_attr <- setdiff(names(attributes(newdata)),
+                          names(attributes(updated_newdata)))
+  if(length(missing_attr) > 0){
+    attributes(updated_newdata)[missing_attr] <- attributes(newdata)[missing_attr]
+  }
+  attr(updated_newdata, "int_cols") <- int_cols
   return(updated_newdata)
 }
 
@@ -160,6 +219,13 @@ contrast_matrix <- function(object, contrast_vars){
   # Store additional variables other than proportions or ID effects separately
   # These will be stacked to the final data later
   extra_vars <- names(contr_data)[!names(contr_data) %in% c(prop)]
+  # Special case for FG model if FG is specified
+  if("FG_" %in% extra_vars){
+    FG_ints <- colnames(contr_data[, "FG_"])
+    FG_names <- if(is.null(FG_ints)) "FG_" else paste0("FG_.", FG_ints)
+    extra_vars <- extra_vars[extra_vars != "FG_"]
+    extra_vars <- c(extra_vars, FG_names)
+  }
   
   # The missing proportions in contrast_vars are assumed 0
   prop_missing <- prop[!prop %in% names(contr_data)]
@@ -191,7 +257,7 @@ contrast_matrix <- function(object, contrast_vars){
   
   # Subtract two components to get back to contrast form
   ID_data <- positive - negative
-  
+
   # Add extra variables onto the matrix
   if(length(extra_vars) > 0){
     # If user has specified any interaction effects trust them and override
@@ -201,7 +267,20 @@ contrast_matrix <- function(object, contrast_vars){
       message("Interaction/Identity effects were specified manually in `contrast_vars` ", 
               "using the values specified by user instead of those calculated internally.")
       common <- extra_vars[extra_vars %in% names(ID_data)]
-      ID_data[, common] <- contr_data[common]
+      FG_cols <- grep("^FG_\\.", common, value = TRUE)
+      # Special case for FG models
+      if(length(FG_cols) > 0){
+        # If FG cols present they need to be appended differently
+        # First append everyting else
+        ID_data[, common[!common %in% FG_cols]] <- contr_data[, common[!common %in% FG_cols]]
+        # Then append FG values
+        ID_data[, FG_cols] <- contr_data[, "FG_"]
+      } else {
+        # All other cases simply append columns
+        ID_data[, common] <- contr_data[common]
+      } 
+      
+      
     }
     the_C <- cbind(ID_data, contr_data[extra_vars[!extra_vars %in% common]])
   } else {
@@ -217,7 +296,7 @@ contrast_matrix <- function(object, contrast_vars){
     the_C$FG_ <- as.matrix(FGs)
   }
   
-  # Add any missing variables in the data needed for constrast
+  # Add any missing variables in the data needed for contrast
   the_C <- add_extra_vars(object, newdata = the_C)
   
   # Covert the factor variables in the data to their one-hot encoded counterparts
@@ -326,7 +405,6 @@ get_row_differences <- function(data, ref = NULL) {
     stop("All values in `data` should be numeric.")
   }
   
-  # browser()
   if (!is.null(ref)) {
     # Validate reference
     if (is.character(ref)) {
@@ -370,7 +448,7 @@ get_row_differences <- function(data, ref = NULL) {
   }
   
   # Combine lists and add proper row-names
-  diff_data <- do.call(rbind, lapply(diffs, as.data.frame))
+  diff_data <- do.call(rbind, lapply(diffs, as.data.frame, check.names = FALSE))
   rownames(diff_data) <- rownames_out
   
   return(diff_data)

@@ -20,9 +20,18 @@ data from experiments that explore the effects of species diversity
 (from a pool of *S* species) on community-level responses. Data suitable
 for DI models will include (at least) for each experimental unit: a
 response recorded at a point in time, and a set of proportions of *S*
-species $`p_1`$, $`p_2`$, …, $`p_S`$ from a point in time prior to the
+species $p_1$, $p_2$, …, $p_S$ from a point in time prior to the
 recording of the response. The proportions sum to 1 for each
 experimental unit.
+
+**Main changes in the package from version 1.3.2 to version 1.4.1**
+
+- The package now provides functionality for testing functional
+  redundancy between species within an ecosystem. The `fr_test_DI()`
+  function can be used to test functional redundancy using models fit
+  with the DImodels package, while `fr_communities()` and `fr_test()`
+  can be used to perform the same test using models fitted using any
+  other modelling package.
 
 **Main changes in the package from version 1.3.2 to version 1.3.3**
 
@@ -116,29 +125,27 @@ it was assumed that species 1 to 5 come from functional group 1, species
 group 3, where species in the same functional group are assumed to have
 similar traits. The following equation was used to simulate the data.
 
-``` math
- y = \sum_{i=1}^{9}\beta_ip_i + \omega_{11}\sum_{\substack{i,j = 1 \\ i<j}}^5p_ip_j + \omega_{22}p_6p_7 + \omega_{33}p_8p_9 \\ + \omega_{12}\sum_{\substack{i \in {1,2,3,4,5} \\ j \in {6,7}}}p_ip_j + \omega_{13}\sum_{\substack{i \in {1,2,3,4,5} \\ j \in {8,9}}}p_ip_j + \omega_{23}\sum_{\substack{i \in {6,7} \\ j \in {8,9}}}p_ip_j + \gamma_k + \epsilon
-```
-Where $`\gamma_k`$ is a treatment effect with two levels (*k = 1,2*) and
-$`\epsilon`$ was assumed IID N(0, $`\sigma^2`$). The parameter values
-are in the following table.
+$$ y = \sum_{i=1}^{9}\beta_ip_i + \omega_{11}\sum_{\substack{i,j = 1 \\ i<j}}^5p_ip_j + \omega_{22}p_6p_7 + \omega_{33}p_8p_9 \\ + \omega_{12}\sum_{\substack{i \in {1,2,3,4,5} \\ j \in {6,7}}}p_ip_j + \omega_{13}\sum_{\substack{i \in {1,2,3,4,5} \\ j \in {8,9}}}p_ip_j + \omega_{23}\sum_{\substack{i \in {6,7} \\ j \in {8,9}}}p_ip_j + \gamma_k + \epsilon$$
+Where $\gamma_k$ is a treatment effect with two levels (*k = 1,2*) and
+$\epsilon$ was assumed IID N(0, $\sigma^2$). The parameter values are in
+the following table.
 
-| Parameter   | Value |         | Parameter       | Value |
-|-------------|-------|---------|-----------------|-------|
-| $`\beta_1`$ | 10    |         | $`\omega_{11}`$ | 2     |
-| $`\beta_2`$ | 9     |         | $`\omega_{22}`$ | 3     |
-| $`\beta_3`$ | 8     |         | $`\omega_{33}`$ | 1     |
-| $`\beta_4`$ | 7     |         | $`\omega_{12}`$ | 4     |
-| $`\beta_5`$ | 11    |         | $`\omega_{13}`$ | 9     |
-| $`\beta_6`$ | 6     |         | $`\omega_{23}`$ | 3     |
-| $`\beta_7`$ | 5     |         | $`\gamma_1`$    | 3     |
-| $`\beta_8`$ | 8     |         | $`\gamma_2`$    | 0     |
-| $`\beta_9`$ | 9     |         | $`\sigma`$      | 1.2   |
+| Parameter | Value |         | Parameter     | Value |
+|-----------|-------|---------|---------------|-------|
+| $\beta_1$ | 10    |         | $\omega_{11}$ | 2     |
+| $\beta_2$ | 9     |         | $\omega_{22}$ | 3     |
+| $\beta_3$ | 8     |         | $\omega_{33}$ | 1     |
+| $\beta_4$ | 7     |         | $\omega_{12}$ | 4     |
+| $\beta_5$ | 11    |         | $\omega_{13}$ | 9     |
+| $\beta_6$ | 6     |         | $\omega_{23}$ | 3     |
+| $\beta_7$ | 5     |         | $\gamma_1$    | 3     |
+| $\beta_8$ | 8     |         | $\gamma_2$    | 0     |
+| $\beta_9$ | 9     |         | $\sigma$      | 1.2   |
 
-Here, the non-linear parameter $`\theta`$ that can be included as a
-power on each $`p_ip_j`$ component of each interaction variable
-(Connolly et al 2013) was set equal to one and thus does not appear in
-the equation above.
+Here, the non-linear parameter $\theta$ that can be included as a power
+on each $p_ip_j$ component of each interaction variable (Connolly et al
+2013) was set equal to one and thus does not appear in the equation
+above.
 
 The 206 rows of proportions contained in the dataset `design_a`
 (supplied in the package) were used to simulate the `sim3` dataset. Here
@@ -187,14 +194,14 @@ and it may also be useful to generate summary statistics.
 hist(sim3$response, xlab = "Response", main = "")
 ```
 
-<img src="man/figures/README-unnamed-chunk-7-1.png" width="100%" />
+<img src="man/figures/README-unnamed-chunk-7-1.png" alt="" width="100%" />
 
 ``` r
 # Similar graphs can also be generated for the other species proportions.
 plot(sim3$p1, sim3$response, xlab = "Proportion of species 1", ylab = "Response")
 ```
 
-<img src="man/figures/README-unnamed-chunk-7-2.png" width="100%" />
+<img src="man/figures/README-unnamed-chunk-7-2.png" alt="" width="100%" />
 
 ``` r
 summary(sim3$response)
@@ -215,24 +222,23 @@ a useful starting point in analysis using DI models.
 auto1 <- autoDI(y = "response", prop = 4:12, treat = "treatment", 
                 FG = c("FG1","FG1","FG1","FG1","FG1","FG2","FG2","FG3","FG3"), data = sim3, 
                 selection = "Ftest")
+#> F tests were specified for model selection, however AICc will be used for step 1, since models are not nested in this step
 #> 
 #> --------------------------------------------------------------------------------
 #> Step 1: Investigating whether theta is equal to 1 or not for the AV model, including all available structures
 #> 
 #> Theta estimate: 0.9714
-#> Selection using F tests
-#>            Description                                                       
-#> DI Model 1 Average interactions 'AV' DImodel with treatment                  
-#> DI Model 2 Average interactions 'AV' DImodel with treatment, estimating theta
+#> Selection by AICc
+#> Warning: DI Model with the lowest AICc will be selected, even if the difference is very small.
+#> Please inspect other models to see differences in AICc.
+#>   AICc     DI_Model treat       theta
+#> 1 1409.008 AV       'treatment' FALSE
+#> 2 1410.798 AV       'treatment'  TRUE
+#>   Description                                                       
+#> 1 Average interactions 'AV' DImodel with treatment                  
+#> 2 Average interactions 'AV' DImodel with treatment, estimating theta
 #> 
-#>            DI_model       treat estimate_theta Resid. Df Resid. SSq Resid. MSq
-#> DI Model 1       AV 'treatment'          FALSE       401   694.3095     1.7314
-#> DI Model 2       AV 'treatment'           TRUE       400   693.7321     1.7343
-#>            Df    SSq     F Pr(>F)
-#> DI Model 1                       
-#> DI Model 2  1 0.5775 0.333 0.5642
-#> 
-#> The test concludes that theta is not significantly different from 1.
+#> The conclusion of the model selection procedure is that theta is not significantly different from 1.
 #> 
 #> --------------------------------------------------------------------------------
 #> Step 2: Investigating the interactions
@@ -292,11 +298,11 @@ auto1 <- autoDI(y = "response", prop = 4:12, treat = "treatment",
 The output of `autoDI`, works through the following process:
 
 1.  Step 1 fitted the average interactions (`AV`) model and uses profile
-    likelihood to estimate the non-linear parameter $`\theta`$ and tests
-    whether or not it differs from one. $`\theta`$ was estimated to be
-    0.96814 and was not significantly different from one
-    ($`p = 0.4572`$). Therefore, subsequent steps assumed $`\theta=1`$
-    when fitting the DI models.
+    likelihood to estimate the non-linear parameter $\theta$ and tests
+    whether or not it differs from one. $\theta$ was estimated to be
+    0.96814 and was not significantly different from one ($p = 0.4572$).
+    Therefore, subsequent steps assumed $\theta=1$ when fitting the DI
+    models.
 2.  Step 2 fitted five different DI models, each with a different form
     of species interactions and treatment was always included. The
     functional group model (FG) was the selected model. This assumes
@@ -304,9 +310,9 @@ The output of `autoDI`, works through the following process:
     membership.
 3.  Step 3 provided a test for the treatment and indicated that the
     treatment, included as an additive factor, was significant and
-    needed in the model ($`p < 0.0001`$).
+    needed in the model ($p < 0.0001$).
 4.  Step 4 provides a lack of fit test, here there was no indication of
-    lack of fit in the model selected in Step 3 ($`p = 0.6423`$).
+    lack of fit in the model selected in Step 3 ($p = 0.6423$).
 
 Further details on each of these steps are available in the `autoDI`
 help file. Run the following code to access the documentation.
@@ -355,7 +361,7 @@ summary(auto1)
 ```
 
 If the final model selected by autoDI includes a value of theta other
-than 1, then a 95% confidence interval for $`\theta`$ can be generated
+than 1, then a 95% confidence interval for $\theta$ can be generated
 using the `theta_CI` function:
 
 ``` r
@@ -947,6 +953,132 @@ compare_communities(m3, data = comms_to_compare,
 #> 352 (ref)        36        79 
 #>       "a"       "a"       "b"
 ```
+
+### Testing for functional redundancy between species
+
+Assuming you have a final selected model and now wish to test if a
+subset of species within the system are functionally redundant. The
+`fr_test_DI()` function accepts a fitted DI model along with a vector
+specifying the names of species to test for redundancy and performs an
+equivalence test to assess if the species are functionally redundant.
+
+Suppose you wish to test if the species p1, p2, and p3 are functionally
+redundant given model `m3` fitted above.
+
+``` r
+t1 <- fr_test_DI(m3, redundant = c("p1", "p2", "p3"))
+#> Warning in fr_test_DI(m3, redundant = c("p1", "p2", "p3")): No `delta` supplied; using '0.5 x model residual SD' as the default equivalence margin.
+#> We suggest specifying `delta` explicitly with values based on domain knowledge for better inference.
+t1
+#> -------------------------------------------------------------------------------- 
+#> 
+#> Testing functional redundancy for species p1, p2, and p3.
+#> 
+#> -------------------------------------------------------------------------------- 
+#> 
+#> Equivalence tests conducted at the alpha = 0.05 level (i.e, using 90% CIs) with a delta margin of (-0.66, 0.66) quantified using 0.5 times residual SD of model.
+#> 
+#> Null hypothesis (H0): The species are not functionally redundant.
+#> Alternative hypothesis (H1): The species are functionally redundant.
+#> 
+#> --------------------------------------------------------------------------------
+#> 
+#> Results: 
+#> 
+#> Functional redundancy was not established for p1, p2, and p3 (p = 1.00) due to the following reasons.
+#> 
+#>   - Monoculture performances were not found to be equivalent (p = 0.97).
+#>   - Within-group interactions were not found to be equivalent to 0 (p = 1.00).
+#>   - Between-group interactions were not found to be equivalent for the following (p = 0.67):
+#>     * p4 (p = 0.67)
+#>     * p5 (p = 0.67)
+#>     * p6 (p = 0.67)
+#>     * p7 (p = 0.67)
+#>     * p8 (p = 0.67)
+#>     * p9 (p = 0.67)
+#> 
+#> --------------------------------------------------------------------------------
+#> Note: All tests follow the intersection-union principle and the respective overall p-value is the maximum p-value across all lower level constituent tests.
+```
+
+The function outputs whether the species are functionally redundant and
+also gives the reasons why they are not. In this example, species p1,
+p2, and p3 are not functionally redundant with respect to the response
+as they have do not have equivalent monoculture performances (p = 0.97),
+non-zero within group interaction (p = 1), and do not have equivalent
+interaction strengths with the remaining species in the system (p =
+0.67).
+
+The test results can also be visualised using the `plot()` S3 method. In
+the figure shown below, if any of the pairwise contrasts and their
+associated CIs fall outside the blue rectangle, the species can not be
+shown to be functionally redundant.
+
+``` r
+plot(t1)
+```
+
+<img src="man/figures/README-unnamed-chunk-31-1.png" alt="" width="100%" />
+
+By default, the function throws a warning urging users to set the
+equivalence margin delta. This is a mandatory parameter for conducting
+equivalence tests and is defined as the smallest difference considered
+practically negligible. The equivalence margin should be decided before
+conducting the test based on domain expertise. Additionally, the results
+of the test should be accompanied by the equivalence margin used for
+performing the test. A good starting point for choosing delta may be
+some percentage of the commonly observed range across similar
+experiments for the response being tested. For example, if we assume the
+response in model `m3` to be DM yield, then a reasonable range for DM
+yield is around 20 t/ha and thus delta can be $0.1*20 = 2$ t/ha. This
+means that we consider differences of up to 2 t/ha in predicted response
+between communities to be practically negligible. We can now run the
+test again, this time testing if species p6 and p7 are functionally
+redundant.
+
+``` r
+t2 <- fr_test_DI(m3, c("p6", "p7"), delta = 2)
+print(t2)
+#> -------------------------------------------------------------------------------- 
+#> 
+#> Testing functional redundancy for species p6 and p7.
+#> 
+#> -------------------------------------------------------------------------------- 
+#> 
+#> Equivalence tests conducted at the alpha = 0.05 level (i.e, using 90% CIs) with a delta margin of (-2, 2) as defined by user.
+#> 
+#> Null hypothesis (H0): The species are not functionally redundant.
+#> Alternative hypothesis (H1): The species are functionally redundant.
+#> 
+#> --------------------------------------------------------------------------------
+#> 
+#> Results: 
+#> 
+#> The species p6 and p7 are functionally redundant (p = 0.0019).
+#> 
+#> All equivalence criteria were satisfied.
+#> 
+#>   - Monocultures were found to have equivalent performance (p = 0.0019). 
+#>   - Within-group interactions were found to be equivalent to 0 (p = 0.0003). 
+#>   - Between-group interactions with all other species were found to be equivalent (p < 0.0001).
+#> 
+#> --------------------------------------------------------------------------------
+#> Note: All tests follow the intersection-union principle and the respective overall p-value is the maximum p-value across all lower level constituent tests.
+plot(t2)
+```
+
+<img src="man/figures/README-unnamed-chunk-32-1.png" alt="" width="100%" />
+
+The test shows that, for this particular response, species p6 and p7 are
+functionally redundant (p = 0.0019) and satisfy all three equivalence
+criteria at an equivalence margin of (-2, 2).
+
+Users may wish to try a different value for delta based on their
+understanding of the response being tested. However, the delta used for
+testing should always be reported alongside the test results.
+Additionally, it is also recommended to conduct a sensitivity analysis
+of the result based on different values of delta. See the `fr_test_DI()`
+and `fr_test()` functions help page for more information.
 
 ## References
 
